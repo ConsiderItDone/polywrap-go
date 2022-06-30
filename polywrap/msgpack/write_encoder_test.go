@@ -1,6 +1,7 @@
 package msgpack
 
 import (
+	"math"
 	"reflect"
 	"testing"
 )
@@ -234,5 +235,84 @@ func TestWriteBytes(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("WriteBytes(false) is incorrect, got: %v, want: %v.", actual, expected)
+	}
+}
+
+func TestWriteArray(t *testing.T) {
+	cases := []struct {
+		name     string
+		data     []any
+		expected []byte
+	}{
+		{
+			name:     "nil",
+			data:     nil,
+			expected: []byte{192},
+		},
+		{
+			name:     "[]int8",
+			data:     []any{int8(math.MinInt8), int8(math.MaxInt8)},
+			expected: []byte{146, 208, 128, 127},
+		},
+		{
+			name:     "[]int16",
+			data:     []any{int16(math.MinInt16), int16(math.MaxInt16)},
+			expected: []byte{146, 209, 128, 0, 209, 127, 255},
+		},
+		{
+			name:     "[]int32",
+			data:     []any{int32(math.MinInt32), int32(math.MaxInt32)},
+			expected: []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
+		},
+		{
+			name:     "[]int64",
+			data:     []any{int64(math.MinInt64), int64(math.MaxInt64)},
+			expected: []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
+		},
+		{
+			name:     "[]uint8",
+			data:     []any{uint8(0), uint8(math.MaxUint8)},
+			expected: []byte{146, 0, 204, 255},
+		},
+		{
+			name:     "[]uint16",
+			data:     []any{uint16(0), uint16(math.MaxUint16)},
+			expected: []byte{146, 0, 205, 255, 255},
+		},
+		{
+			name:     "[]uint32",
+			data:     []any{uint32(0), uint32(math.MaxUint32)},
+			expected: []byte{146, 0, 206, 255, 255, 255, 255},
+		},
+		{
+			name:     "[]uint64",
+			data:     []any{uint64(0), uint64(math.MaxUint64)},
+			expected: []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
+		},
+		{
+			name:     "[]float32",
+			data:     []any{float32(0.6046603), float32(0.9405091)},
+			expected: []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
+		},
+		{
+			name:     "[]float64",
+			data:     []any{float64(0.6645600532184904), float64(0.4377141871869802)},
+			expected: []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
+		},
+	}
+
+	for i := range cases {
+		tcase := cases[i]
+		t.Run(tcase.name, func(t *testing.T) {
+			context := NewContext("")
+			writer := NewWriteEncoder(context)
+			writer.WriteArray(tcase.data)
+
+			actual := writer.Buffer()
+			if !reflect.DeepEqual(actual, tcase.expected) {
+				t.Logf("%#+v", tcase)
+				t.Errorf("TestWriteArray(%s) is incorrect, got: %v, want: %v.", tcase.name, actual, tcase.expected)
+			}
+		})
 	}
 }
