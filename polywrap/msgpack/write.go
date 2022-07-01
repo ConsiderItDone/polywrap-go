@@ -12,5 +12,7 @@ type Write interface {
 	WriteU32(value uint32)
 	WriteStringLength(length uint32)
 	WriteString(value string)
+	WriteBytesLength(length uint32)
+	WriteBytes(value []byte)
 	WriteMapLength(length uint32)
 }

@@ -43,6 +43,7 @@ func _w3_invoke(methodSize, argsSize uint32) bool {
 	return true
 }
 
+//go:generate ...
 func testHttpWrapped(argsBuf []byte) []byte {
 	testHttp()
 
@@ -55,11 +56,10 @@ func serializeResult() []byte {
 	writeTestHttpResult(sizer)
 
 	context = msgpack.NewContext("Serializing (encoding) imported query-type: get")
-	dataView := msgpack.NewDataView(context)
-	encoder := msgpack.NewWriteEncoder(context, dataView)
+	encoder := msgpack.NewWriteEncoder(context)
 	writeTestHttpResult(encoder)
 
-	return dataView.GetB().Bytes()
+	return encoder.Buffer()
 }
 
 //export testHttp
@@ -69,8 +69,7 @@ func testHttp() {
 	writeArgs(sizer)
 
 	context = msgpack.NewContext("Serializing (encoding) imported query-type: post")
-	dataView := msgpack.NewDataView(context)
-	encoder := msgpack.NewWriteEncoder(context, dataView)
+	encoder := msgpack.NewWriteEncoder(context)
 	writeArgs(encoder)
 
 	polywrap.W3Subinvoke("w3://ens/http.web3api.eth", "query", "get", dataView.GetB().Bytes())
@@ -91,7 +90,7 @@ func writeArgs(w msgpack.Write) {
 	w.Context().Push("url", "string", "writing property")
 	w.WriteString("url")
 	//w.WriteString("https://google.com")
-	w.WriteString("http://localhost:4040/ens?from=gowasm")
+	w.WriteString("http://localhost:4040/ens")
 	w.Context().Pop()
 	w.Context().Push("request", "Types.HTTP_Request | null", "writing property")
 	w.WriteString("request")
