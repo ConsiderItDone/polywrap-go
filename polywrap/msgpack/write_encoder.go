@@ -1,11 +1,10 @@
 package msgpack
 
 import (
-	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
 	"math"
-)
 
-type Array[T int8 | int16] []T
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
+)
 
 type WriteEncoder struct {
 	context *Context
@@ -162,7 +161,36 @@ func (we *WriteEncoder) WriteArrayLength(length uint32) {
 	}
 }
 
-func (we *WriteEncoder) WriteArray(zz Array[int8]) {
-	//length := len(a)
-	//we.WriteArrayLength(uint32(length))
+func (we *WriteEncoder) WriteArray(value []any) {
+	if len(value) == 0 {
+		we.WriteNil()
+		return
+	}
+	we.WriteArrayLength(uint32(len(value)))
+	for i := range value {
+		switch v := value[i].(type) {
+		case int8:
+			we.WriteI8(v)
+		case int16:
+			we.WriteI16(v)
+		case int32:
+			we.WriteI32(v)
+		case int64:
+			we.WriteI64(v)
+		case uint8:
+			we.WriteU8(v)
+		case uint16:
+			we.WriteU16(v)
+		case uint32:
+			we.WriteU32(v)
+		case uint64:
+			we.WriteU64(v)
+		case float32:
+			we.WriteFloat32(v)
+		case float64:
+			we.WriteFloat64(v)
+		default:
+			panic("unknow array type")
+		}
+	}
 }
