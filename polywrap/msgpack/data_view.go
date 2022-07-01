@@ -7,14 +7,20 @@ import (
 )
 
 type DataView struct {
-	bufferBytes []byte
-	buf         *bytes.Buffer
-	context     *Context
+	buf     *bytes.Buffer
+	context *Context
 }
 
 func NewDataView(context *Context) *DataView {
 	return &DataView{
 		buf:     new(bytes.Buffer),
+		context: context,
+	}
+}
+
+func NewDataViewWithBuf(context *Context, data []byte) *DataView {
+	return &DataView{
+		buf:     bytes.NewBuffer(data),
 		context: context,
 	}
 }
@@ -102,4 +108,14 @@ func (dw *DataView) WriteString(value string) {
 
 func (dw *DataView) WriteBytes(value []byte) {
 	dw.buf.Write(value)
+}
+
+func (dw *DataView) ReadUint8() uint8 {
+	var result uint8
+	err := binary.Read(dw.buf, binary.BigEndian, &result)
+	if err != nil {
+		panic("ReadUint8 error" + err.Error())
+	}
+
+	return result
 }
