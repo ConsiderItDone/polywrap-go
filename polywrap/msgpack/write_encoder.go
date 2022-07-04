@@ -161,7 +161,7 @@ func (we *WriteEncoder) WriteArrayLength(length uint32) {
 	}
 }
 
-func (we *WriteEncoder) WriteArray(value []any) {
+func (we *WriteEncoder) WriteArray(value []interface{}) {
 	if len(value) == 0 {
 		we.WriteNil()
 		return
