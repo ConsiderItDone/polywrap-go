@@ -113,6 +113,15 @@ func (we *WriteEncoder) WriteFloat64(value float64) {
 func (we *WriteEncoder) WriteStringLength(length uint32) {
 	if length < 32 {
 		we.view.WriteUint8(uint8(length) | uint8(format.FIXSTR))
+	} else if length <= math.MaxUint8 {
+		we.view.WriteUint8(uint8(format.STR8))
+		we.view.WriteUint8(uint8(length))
+	} else if length <= math.MaxUint16 {
+		we.view.WriteUint8(uint8(format.STR16))
+		we.view.WriteUint16(uint16(length))
+	} else {
+		we.view.WriteUint8(uint8(format.STR32))
+		we.view.WriteUint32(length)
 	}
 }
 
