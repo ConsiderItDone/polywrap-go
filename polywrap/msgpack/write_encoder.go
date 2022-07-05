@@ -48,7 +48,7 @@ func (we *WriteEncoder) WriteI32(value int32) {
 }
 
 func (we *WriteEncoder) WriteI64(value int64) {
-	if value > 0 && value < 1<<7 {
+	if value >= 0 && value < 1<<7 {
 		// positive fixed int
 		we.view.WriteInt8(int8(value))
 	} else if value < 0 && value >= -(1<<5) {

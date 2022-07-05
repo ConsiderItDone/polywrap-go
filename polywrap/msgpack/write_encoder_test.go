@@ -51,7 +51,7 @@ func TestWriteI8(t *testing.T) {
 		input int8
 		want  []byte
 	}{
-		{name: "zero", input: 0, want: []byte{208, 0}},
+		{name: "zero", input: 0, want: []byte{0}},
 		{name: "negative fixed int", input: -1, want: []byte{255}},
 		{name: "negative fixed int", input: -31, want: []byte{225}},
 		{name: "negative fixed int", input: -32, want: []byte{224}},
