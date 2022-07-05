@@ -1,6 +1,7 @@
 package msgpack
 
 import (
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/json"
 	"math"
 
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
@@ -202,4 +203,13 @@ func (we *WriteEncoder) WriteArray(value []interface{}) {
 			panic("unknow array type")
 		}
 	}
+}
+
+func (we *WriteEncoder) WriteJson(data *map[string]interface{}) {
+	str, err := json.Encode(data)
+	if err != nil {
+		panic("json encode error" + err.Error())
+	}
+
+	we.WriteString(str)
 }
