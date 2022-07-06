@@ -2,6 +2,7 @@ package msgpack
 
 import (
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/json"
+	"github.com/valyala/fastjson"
 	"math"
 	"reflect"
 	"testing"
@@ -356,23 +357,34 @@ func TestWriteArray(t *testing.T) {
 }
 
 func TestWriteJson(t *testing.T) {
+	j := json.NewJSON()
+	obj1 := j.NewObject()
+	obj1.Set("language", j.NewString("Golang"))
+	obj1.Set("edition", j.NewString("2021"))
+
+	obj2 := j.NewObject()
+	obj2.Set("foo", j.NewString("bar"))
+
+	//t.Logf("Obj1: %s", obj1.String())
+	//t.Logf("Obj2: %s", obj2.String())
+
 	tests := []struct {
 		name  string
-		input map[string]interface{}
+		input *fastjson.Value
 		want  []byte
 	}{
 		{
 			name:  "JSON",
-			input: map[string]interface{}{"language": "Golang", "edition": "2021"},
+			input: obj1,
 			want: []byte{
-				217, 38, 123, 34, 101, 100, 105, 116, 105, 111, 110, 34, 58, 34, 50, 48, 50, 49,
-				34, 44, 34, 108, 97, 110, 103, 117, 97, 103, 101, 34, 58, 34, 71, 111, 108, 97,
-				110, 103, 34, 125,
+				217, 38, 123, 34, 108, 97, 110, 103, 117, 97, 103, 101, 34, 58, 34, 71, 111, 108,
+				97, 110, 103, 34, 44, 34, 101, 100, 105, 116, 105, 111, 110, 34, 58, 34, 50, 48,
+				50, 49, 34, 125,
 			},
 		},
 		{
 			name:  "JSON",
-			input: map[string]interface{}{"foo": "bar"},
+			input: obj2,
 			want: []byte{
 				173, 123, 34, 102, 111, 111, 34, 58, 34, 98, 97, 114, 34, 125,
 			},
@@ -382,12 +394,12 @@ func TestWriteJson(t *testing.T) {
 	for _, tc := range tests {
 		context := NewContext("")
 		writer := NewWriteEncoder(context)
-		writer.WriteJson(&tc.input)
+		writer.WriteJson(tc.input)
 
 		got := writer.Buffer()
 		if !reflect.DeepEqual(tc.want, got) {
-			output, _ := json.Encode(&tc.input)
-			t.Logf("Input: %v, output: %s", tc.input, output)
+			//output, _ := json.Encode(&tc.input)
+			//t.Logf("Input: %v, output: %s", tc.input, output)
 			t.Errorf("%s (%v): expected: %v, got: %v", tc.name, tc.input, tc.want, got)
 		}
 	}
