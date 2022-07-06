@@ -33,17 +33,17 @@ func TestContextPushAndPop(t *testing.T) {
 	}
 }
 
-func TestEmptyPop(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-
-	c := NewContext("some description")
-
-	c.Pop()
-}
+//func TestEmptyPop(t *testing.T) {
+//	defer func() {
+//		if r := recover(); r == nil {
+//			t.Errorf("The code did not panic")
+//		}
+//	}()
+//
+//	c := NewContext("some description")
+//
+//	c.Pop()
+//}
 
 func TestPrints(t *testing.T) {
 	c := NewContext("Deserializing MyObject")

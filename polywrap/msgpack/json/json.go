@@ -1,22 +1,39 @@
 package json
 
-import "encoding/json"
+import (
+	"github.com/valyala/fastjson"
+)
 
-func Decode(value string) (*map[string]interface{}, error) {
-	var data map[string]interface{}
-	err := json.Unmarshal([]byte(value), &data)
+type JSON struct {
+	*fastjson.Value
+	*fastjson.Arena
+}
+
+func NewJSON() *JSON {
+	return &JSON{
+		Value: nil,
+		Arena: new(fastjson.Arena),
+	}
+}
+
+func Decode(value string) (*JSON, error) {
+	var p fastjson.Parser
+	v, err := p.Parse(value)
 	if err != nil {
 		return nil, err
 	}
 
-	return &data, nil
+	return &JSON{
+		Value: v,
+		Arena: nil,
+	}, nil
 }
 
-func Encode(data *map[string]interface{}) (string, error) {
-	out, err := json.Marshal(data)
-	if err != nil {
-		return "", err
-	}
-
-	return string(out), nil
-}
+//func Encode(data *map[string]interface{}) (string, error) {
+//	out, err := json.Marshal(data)
+//	if err != nil {
+//		return "", err
+//	}
+//
+//	return string(out), nil
+//}
