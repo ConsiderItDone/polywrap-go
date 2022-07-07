@@ -48,9 +48,9 @@ func runcases(t *testing.T, cases []readcase) {
 				v = reader.ReadF32()
 			case format.FLOAT64:
 				v = reader.ReadF64()
-			case format.STR16:
+			case format.STR8, format.STR16, format.STR32:
 				v = reader.ReadString()
-			case format.BIN8:
+			case format.BIN8, format.BIN16, format.BIN32:
 				v = reader.ReadBytes()
 			default:
 				t.Fatal("unknown format")
