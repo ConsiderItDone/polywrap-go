@@ -4,7 +4,7 @@ import "unsafe"
 
 //go:wasm-module wrap
 //export __wrap_subinvoke
-func __wrap_subinvoke(uriPtr, uriLen, methodPtr, methodLen, inputPtr, inputLen uint32) bool
+func __wrap_subinvoke(uriPtr, uriLen, methodPtr, methodLen, argsPtr, argsLen uint32) bool
 
 // Subinvoke Result
 
@@ -26,13 +26,13 @@ func __wrap_subinvoke_error_len() uint32
 //export __wrap_subinvoke_error
 func __wrap_subinvoke_error(ptr uint32)
 
-func WrapSubinvoke(uri, method string, input []byte) {
+func WrapSubinvoke(uri, method string, args []byte) {
 	uriPtr := unsafe.Pointer(&uri)
 	methodPtr := unsafe.Pointer(&method)
-	inputPtr := unsafe.Pointer(&input)
+	argsPtr := unsafe.Pointer(&args)
 
 	result := __wrap_subinvoke(*(*uint32)(uriPtr), uint32(len(uri)), *(*uint32)(methodPtr), uint32(len(method)),
-		*(*uint32)(inputPtr), uint32(len(input)))
+		*(*uint32)(argsPtr), uint32(len(args)))
 
 	if !result {
 		errorLen := __wrap_subinvoke_error_len()
