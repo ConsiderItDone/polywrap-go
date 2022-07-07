@@ -2,7 +2,7 @@ package msgpack
 
 type Read interface {
 	Context() *Context
-	ReadNil()
+	IsNil()
 	ReadBool(value bool)
 	ReadI8(value int8)
 	ReadI16(value int16)
