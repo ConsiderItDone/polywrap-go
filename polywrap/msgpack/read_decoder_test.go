@@ -284,3 +284,41 @@ func TestReadF64(t *testing.T) {
 		},
 	})
 }
+
+func TestReadBytes(t *testing.T) {
+	ctx := NewContext("")
+	wri := NewWriteEncoder(ctx)
+	wri.WriteBytes(nil)
+	t.Logf("%#+v", wri.Buffer())
+	runcases(t, []readcase{
+		{
+			name:   "can read nil",
+			bytes:  []byte{0xc0},
+			format: format.BIN8,
+			value:  []byte{},
+		},
+		{
+			name:   "can read bytes",
+			bytes:  []byte{0xc4, 0x1, 0x1},
+			format: format.BIN8,
+			value:  []byte{1},
+		},
+	})
+}
+
+func TestReadString(t *testing.T) {
+	runcases(t, []readcase{
+		{
+			name:   "can empty string",
+			bytes:  []byte{0xa0},
+			format: format.STR8,
+			value:  "",
+		},
+		{
+			name:   "can read string",
+			bytes:  []byte{0xab, 0x73, 0x6f, 0x6d, 0x65, 0x20, 0x73, 0x74, 0x72, 0x69, 0x6e, 0x67},
+			format: format.STR8,
+			value:  "some string",
+		},
+	})
+}

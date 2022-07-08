@@ -137,16 +137,63 @@ func (rd *ReadDecoder) ReadF64() float64 {
 	return rd.view.ReadFloat64()
 }
 
+func (rd *ReadDecoder) ReadBytesLength() uint32 {
+	switch rd.view.ReadFormat() {
+	case format.NIL:
+		return 0
+	case format.BIN8:
+		return uint32(rd.view.ReadUint8())
+	case format.BIN16:
+		return uint32(rd.view.ReadUint16())
+	case format.BIN32:
+		return uint32(rd.view.ReadUint32())
+	}
+	panic(rd.context.printWithContext("Property must be of type 'binary'. Found ..."))
+}
+
 func (rd *ReadDecoder) ReadBytes() []byte {
+	rd.ReadBytesLength()
 	return rd.view.ReadBytes()
 }
 
+func (rd *ReadDecoder) ReadStringLength() uint32 {
+	f := rd.view.ReadFormat()
+	if isFixedString(uint8(f)) {
+		return uint32(f & 0x1f)
+	}
+	if isFixedArray(uint8(f)) {
+		return uint32(f & format.FOUR_LEAST_SIG_BITS_IN_BYTE)
+	}
+	switch f {
+	case format.NIL:
+		return 0
+	case format.STR8:
+		return uint32(rd.view.ReadUint8())
+	case format.STR16:
+		return uint32(rd.view.ReadUint16())
+	case format.STR32:
+		return uint32(rd.view.ReadUint32())
+	}
+	panic(rd.context.printWithContext("Property must be of type 'string'. Found ..."))
+}
+
 func (rd *ReadDecoder) ReadString() string {
+	if rd.ReadStringLength() == 0 {
+		return ""
+	}
 	return rd.view.ReadString()
 }
 
 func isFixedInt(v uint8) bool {
 	return v>>7 == 0
+}
+
+func isFixedString(v uint8) bool {
+	return format.Format(v&0xe0) == format.FIXSTR
+}
+
+func isFixedArray(v uint8) bool {
+	return format.Format(v&0xf0) == format.FIXARRAY
 }
 
 func isNegativeFixedInt(v uint8) bool {

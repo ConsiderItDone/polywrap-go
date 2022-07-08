@@ -201,16 +201,14 @@ func (dw *DataView) WriteString(value string) {
 	dw.buf.WriteString(value)
 }
 
-// ToDo: add implementation
 func (dw *DataView) ReadString() string {
-	return ""
+	return string(dw.buf.Bytes())
 }
 
 func (dw *DataView) WriteBytes(value []byte) {
 	dw.buf.Write(value)
 }
 
-// ToDo: add implementation
 func (dw *DataView) ReadBytes() []byte {
-	return nil
+	return dw.buf.Bytes()
 }
