@@ -184,6 +184,34 @@ func (rd *ReadDecoder) ReadString() string {
 	return rd.view.ReadString()
 }
 
+func (rd *ReadDecoder) ReadArrayLength() uint32 {
+	f := rd.view.ReadFormat()
+	if f == format.NIL {
+		return 0
+	}
+	if isFixedArray(uint8(f)) {
+		return uint32(f & format.FOUR_LEAST_SIG_BITS_IN_BYTE)
+	}
+	switch f {
+	case format.ARRAY16:
+		return uint32(rd.view.ReadUint16())
+	case format.ARRAY32:
+		return rd.view.ReadUint32()
+	case format.NIL:
+		return 0
+	}
+	panic(rd.context.printWithContext("Property must be of type 'array'. Found ..."))
+}
+
+func (rd *ReadDecoder) ReadArray(fn func(reader Read) any) []any {
+	size := rd.ReadArrayLength()
+	data := make([]any, size)
+	for i := uint32(0); i < size; i++ {
+		data[i] = fn(rd)
+	}
+	return data
+}
+
 func isFixedInt(v uint8) bool {
 	return v>>7 == 0
 }

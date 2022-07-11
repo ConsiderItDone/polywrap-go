@@ -12,6 +12,12 @@ type Read interface {
 	ReadU16() uint16
 	ReadU32() uint32
 	ReadU64() uint64
-	ReadString() string
+	ReadF32() float32
+	ReadF64() float64
+	ReadBytesLength() uint32
 	ReadBytes() []byte
+	ReadStringLength() uint32
+	ReadString() string
+	ReadArrayLength() uint32
+	ReadArray(fn func(reader Read) any) []any
 }

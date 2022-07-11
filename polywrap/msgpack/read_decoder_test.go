@@ -13,6 +13,7 @@ type readcase struct {
 	bytes  []byte
 	format format.Format
 	value  interface{}
+	fn     func(reader Read) any
 }
 
 func runcases(t *testing.T, cases []readcase) {
@@ -52,6 +53,8 @@ func runcases(t *testing.T, cases []readcase) {
 				v = reader.ReadString()
 			case format.BIN8, format.BIN16, format.BIN32:
 				v = reader.ReadBytes()
+			case format.ARRAY16, format.ARRAY32:
+				v = reader.ReadArray(cases[i].fn)
 			default:
 				t.Fatal("unknown format")
 			}
@@ -319,6 +322,109 @@ func TestReadString(t *testing.T) {
 			bytes:  []byte{0xab, 0x73, 0x6f, 0x6d, 0x65, 0x20, 0x73, 0x74, 0x72, 0x69, 0x6e, 0x67},
 			format: format.STR8,
 			value:  "some string",
+		},
+	})
+}
+
+func TestReadArray(t *testing.T) {
+	runcases(t, []readcase{
+		{
+			name:   "nil",
+			bytes:  []byte{192},
+			format: format.ARRAY16,
+			value:  []any{},
+			fn:     nil,
+		},
+		{
+			name:   "[]int8",
+			bytes:  []byte{146, 208, 128, 127},
+			format: format.ARRAY16,
+			value:  []any{int8(math.MinInt8), int8(math.MaxInt8)},
+			fn: func(reader Read) any {
+				return reader.ReadI8()
+			},
+		},
+		{
+			name:   "[]int16",
+			bytes:  []byte{146, 209, 128, 0, 209, 127, 255},
+			format: format.ARRAY16,
+			value:  []any{int16(math.MinInt16), int16(math.MaxInt16)},
+			fn: func(reader Read) any {
+				return reader.ReadI16()
+			},
+		},
+		{
+			name:   "[]int32",
+			bytes:  []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
+			format: format.ARRAY16,
+			value:  []any{int32(math.MinInt32), int32(math.MaxInt32)},
+			fn: func(reader Read) any {
+				return reader.ReadI32()
+			},
+		},
+		{
+			name:   "[]int64",
+			bytes:  []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
+			format: format.ARRAY16,
+			value:  []any{int64(math.MinInt64), int64(math.MaxInt64)},
+			fn: func(reader Read) any {
+				return reader.ReadI64()
+			},
+		},
+
+		{
+			name:   "[]uint8",
+			bytes:  []byte{146, 0, 204, 255},
+			format: format.ARRAY16,
+			value:  []any{uint8(0), uint8(math.MaxUint8)},
+			fn: func(reader Read) any {
+				return reader.ReadU8()
+			},
+		},
+		{
+			name:   "[]uint16",
+			bytes:  []byte{146, 0, 205, 255, 255},
+			format: format.ARRAY16,
+			value:  []any{uint16(0), uint16(math.MaxUint16)},
+			fn: func(reader Read) any {
+				return reader.ReadU16()
+			},
+		},
+		{
+			name:   "[]uint32",
+			bytes:  []byte{146, 0, 206, 255, 255, 255, 255},
+			format: format.ARRAY16,
+			value:  []any{uint32(0), uint32(math.MaxUint32)},
+			fn: func(reader Read) any {
+				return reader.ReadU32()
+			},
+		},
+		{
+			name:   "[]uint64",
+			bytes:  []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
+			format: format.ARRAY16,
+			value:  []any{uint64(0), uint64(math.MaxUint64)},
+			fn: func(reader Read) any {
+				return reader.ReadU64()
+			},
+		},
+		{
+			name:   "[]float32",
+			bytes:  []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
+			format: format.ARRAY16,
+			value:  []any{float32(0.6046603), float32(0.9405091)},
+			fn: func(reader Read) any {
+				return reader.ReadF32()
+			},
+		},
+		{
+			name:   "[]float64",
+			bytes:  []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
+			format: format.ARRAY16,
+			value:  []any{float64(0.6645600532184904), float64(0.4377141871869802)},
+			fn: func(reader Read) any {
+				return reader.ReadF64()
+			},
 		},
 	})
 }
