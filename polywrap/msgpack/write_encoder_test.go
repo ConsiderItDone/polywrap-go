@@ -282,125 +282,112 @@ func TestWriteBytes(t *testing.T) {
 }
 
 func TestWriteArray(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []interface{}
-		want  []byte
+	cases := []struct {
+		name     string
+		data     []any
+		expected []byte
+		fn       func(encoder Write, item any)
 	}{
 		{
-			name:  "nil",
-			input: nil,
-			want:  []byte{192},
+			name:     "nil",
+			data:     nil,
+			expected: []byte{192},
+			fn:       nil,
 		},
 		{
-			name:  "[]int8",
-			input: []interface{}{int8(math.MinInt8), int8(math.MaxInt8)},
-			want:  []byte{146, 208, 128, 127},
-		},
-		{
-			name:  "[]int16",
-			input: []interface{}{int16(math.MinInt16), int16(math.MaxInt16)},
-			want:  []byte{146, 209, 128, 0, 209, 127, 255},
-		},
-		{
-			name:  "[]int32",
-			input: []interface{}{int32(math.MinInt32), int32(math.MaxInt32)},
-			want:  []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
-		},
-		{
-			name:  "[]int64",
-			input: []interface{}{int64(math.MinInt64), int64(math.MaxInt64)},
-			want:  []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
-		},
-		{
-			name:  "[]uint8",
-			input: []interface{}{uint8(0), uint8(math.MaxUint8)},
-			want:  []byte{146, 0, 204, 255},
-		},
-		{
-			name:  "[]uint16",
-			input: []interface{}{uint16(0), uint16(math.MaxUint16)},
-			want:  []byte{146, 0, 205, 255, 255},
-		},
-		{
-			name:  "[]uint32",
-			input: []interface{}{uint32(0), uint32(math.MaxUint32)},
-			want:  []byte{146, 0, 206, 255, 255, 255, 255},
-		},
-		{
-			name:  "[]uint64",
-			input: []interface{}{uint64(0), uint64(math.MaxUint64)},
-			want:  []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
-		},
-		{
-			name:  "[]float32",
-			input: []interface{}{float32(0.6046603), float32(0.9405091)},
-			want:  []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
-		},
-		{
-			name:  "[]float64",
-			input: []interface{}{float64(0.6645600532184904), float64(0.4377141871869802)},
-			want:  []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
-		},
-	}
-
-	for _, tc := range tests {
-		context := NewContext("")
-		writer := NewWriteEncoder(context)
-		writer.WriteArray(tc.input)
-
-		got := writer.Buffer()
-		if !reflect.DeepEqual(tc.want, got) {
-			t.Errorf("TestWriteArray(%s) is incorrect, expected: %v, got: %v", tc.name, tc.input, tc.want)
-		}
-	}
-}
-
-func TestWriteJson(t *testing.T) {
-	j := json.NewJSON()
-	obj1 := j.NewObject()
-	obj1.Set("language", j.NewString("Golang"))
-	obj1.Set("edition", j.NewString("2021"))
-
-	obj2 := j.NewObject()
-	obj2.Set("foo", j.NewString("bar"))
-
-	//t.Logf("Obj1: %s", obj1.String())
-	//t.Logf("Obj2: %s", obj2.String())
-
-	tests := []struct {
-		name  string
-		input *fastjson.Value
-		want  []byte
-	}{
-		{
-			name:  "JSON",
-			input: obj1,
-			want: []byte{
-				217, 38, 123, 34, 108, 97, 110, 103, 117, 97, 103, 101, 34, 58, 34, 71, 111, 108,
-				97, 110, 103, 34, 44, 34, 101, 100, 105, 116, 105, 111, 110, 34, 58, 34, 50, 48,
-				50, 49, 34, 125,
+			name:     "[]int8",
+			data:     []any{int8(math.MinInt8), int8(math.MaxInt8)},
+			expected: []byte{146, 208, 128, 127},
+			fn: func(encoder Write, item any) {
+				encoder.WriteI8(item.(int8))
 			},
 		},
 		{
-			name:  "JSON",
-			input: obj2,
-			want: []byte{
-				173, 123, 34, 102, 111, 111, 34, 58, 34, 98, 97, 114, 34, 125,
+			name:     "[]int16",
+			data:     []any{int16(math.MinInt16), int16(math.MaxInt16)},
+			expected: []byte{146, 209, 128, 0, 209, 127, 255},
+			fn: func(encoder Write, item any) {
+				encoder.WriteI16(item.(int16))
+			},
+		},
+		{
+			name:     "[]int32",
+			data:     []any{int32(math.MinInt32), int32(math.MaxInt32)},
+			expected: []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
+			fn: func(encoder Write, item any) {
+				encoder.WriteI32(item.(int32))
+			},
+		},
+		{
+			name:     "[]int64",
+			data:     []any{int64(math.MinInt64), int64(math.MaxInt64)},
+			expected: []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
+			fn: func(encoder Write, item any) {
+				encoder.WriteI64(item.(int64))
+			},
+		},
+		{
+			name:     "[]uint8",
+			data:     []any{uint8(0), uint8(math.MaxUint8)},
+			expected: []byte{146, 0, 204, 255},
+			fn: func(encoder Write, item any) {
+				encoder.WriteU8(item.(uint8))
+			},
+		},
+		{
+			name:     "[]uint16",
+			data:     []any{uint16(0), uint16(math.MaxUint16)},
+			expected: []byte{146, 0, 205, 255, 255},
+			fn: func(encoder Write, item any) {
+				encoder.WriteU16(item.(uint16))
+			},
+		},
+		{
+			name:     "[]uint32",
+			data:     []any{uint32(0), uint32(math.MaxUint32)},
+			expected: []byte{146, 0, 206, 255, 255, 255, 255},
+			fn: func(encoder Write, item any) {
+				encoder.WriteU32(item.(uint32))
+			},
+		},
+		{
+			name:     "[]uint64",
+			data:     []any{uint64(0), uint64(math.MaxUint64)},
+			expected: []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
+			fn: func(encoder Write, item any) {
+				encoder.WriteU64(item.(uint64))
+			},
+		},
+		{
+			name:     "[]float32",
+			data:     []any{float32(0.6046603), float32(0.9405091)},
+			expected: []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
+			fn: func(encoder Write, item any) {
+				encoder.WriteFloat32(item.(float32))
+			},
+		},
+		{
+			name:     "[]float64",
+			data:     []any{float64(0.6645600532184904), float64(0.4377141871869802)},
+			expected: []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
+			fn: func(encoder Write, item any) {
+				encoder.WriteFloat64(item.(float64))
 			},
 		},
 	}
 
-	for _, tc := range tests {
-		context := NewContext("")
-		writer := NewWriteEncoder(context)
-		writer.WriteJson(tc.input)
+	for i := range cases {
+		tcase := cases[i]
+		t.Run(tcase.name, func(t *testing.T) {
+			context := NewContext("")
+			writer := NewWriteEncoder(context)
+			writer.WriteArray(tcase.data, tcase.fn)
 
-		got := writer.Buffer()
-		if !reflect.DeepEqual(tc.want, got) {
-			//output, _ := json.Encode(&tc.input)
-			//t.Logf("Input: %v, output: %s", tc.input, output)
-			t.Errorf("%s (%v): expected: %v, got: %v", tc.name, tc.input, tc.want, got)
-		}
+			actual := writer.Buffer()
+			if !reflect.DeepEqual(actual, tcase.expected) {
+				t.Logf("%#+v", tcase)
+				t.Errorf("TestWriteArray(%s) is incorrect, got: %v, want: %v.", tcase.name, actual, tcase.expected)
+			}
+		})
 	}
 }
