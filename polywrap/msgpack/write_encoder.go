@@ -1,6 +1,7 @@
 package msgpack
 
 import (
+	"github.com/valyala/fastjson"
 	"math"
 
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
@@ -48,7 +49,7 @@ func (we *WriteEncoder) WriteI32(value int32) {
 }
 
 func (we *WriteEncoder) WriteI64(value int64) {
-	if value > 0 && value < 1<<7 {
+	if value >= 0 && value < 1<<7 {
 		// positive fixed int
 		we.view.WriteInt8(int8(value))
 	} else if value < 0 && value >= -(1<<5) {
@@ -113,6 +114,15 @@ func (we *WriteEncoder) WriteFloat64(value float64) {
 func (we *WriteEncoder) WriteStringLength(length uint32) {
 	if length < 32 {
 		we.view.WriteUint8(uint8(length) | uint8(format.FIXSTR))
+	} else if length <= math.MaxUint8 {
+		we.view.WriteUint8(uint8(format.STR8))
+		we.view.WriteUint8(uint8(length))
+	} else if length <= math.MaxUint16 {
+		we.view.WriteUint8(uint8(format.STR16))
+		we.view.WriteUint16(uint16(length))
+	} else {
+		we.view.WriteUint8(uint8(format.STR32))
+		we.view.WriteUint32(length)
 	}
 }
 
@@ -170,4 +180,9 @@ func (we *WriteEncoder) WriteArray(value []any, fn func(encoder Write, item any)
 	for i := range value {
 		fn(we, value[i])
 	}
+}
+
+func (we *WriteEncoder) WriteJson(data *fastjson.Value) {
+	str := data.String()
+	we.WriteString(str)
 }

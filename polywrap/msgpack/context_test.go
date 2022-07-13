@@ -12,9 +12,9 @@ func TestContextPushAndPop(t *testing.T) {
 		t.Errorf("Length is incorrect, got: %d, want: %d.", c.Length(), 0)
 	}
 
-	c.Push("property", "string", "")
-	c.Push("property", "i32", "")
-	c.Push("property", "bool", "")
+	c.Push("property", "string", "some string")
+	c.Push("property", "i32", "100500")
+	c.Push("property", "bool", "true")
 
 	if c.IsEmpty() {
 		t.Errorf("Context is empty")
@@ -33,12 +33,31 @@ func TestContextPushAndPop(t *testing.T) {
 	}
 }
 
+//func TestEmptyPop(t *testing.T) {
+//	defer func() {
+//		if r := recover(); r == nil {
+//			t.Errorf("The code did not panic")
+//		}
+//	}()
+//
+//	c := NewContext("some description")
+//
+//	c.Pop()
+//}
+
 func TestPrints(t *testing.T) {
 	c := NewContext("Deserializing MyObject")
+	// check empty context printing
+	actual := c.toString()
+	expected := "Context: Deserializing MyObject\n  context stack is empty"
+	if actual != expected {
+		t.Errorf("toString() is incorrect: \ngot \n%s \nwant \n%s", actual, expected)
+	}
+
 	c.Push("propertyOne", "unknown", "searching for property type")
 
-	actual := c.toString()
-	expected := "Context: Deserializing MyObject\n  at propertyOne: unknown >> searching for property type"
+	actual = c.toString()
+	expected = "Context: Deserializing MyObject\n  at propertyOne: unknown >> searching for property type"
 
 	if actual != expected {
 		t.Errorf("toString() is incorrect: \ngot \n%s \nwant \n%s", actual, expected)

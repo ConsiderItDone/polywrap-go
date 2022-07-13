@@ -1,6 +1,8 @@
 package msgpack
 
 import (
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/json"
+	"github.com/valyala/fastjson"
 	"math"
 	"reflect"
 	"testing"
@@ -16,7 +18,6 @@ func TestWriteNil(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("WriteNil is incorrect, got: %v, want: %v.", actual, expected)
-
 	}
 }
 
@@ -52,7 +53,7 @@ func TestWriteI8(t *testing.T) {
 		input int8
 		want  []byte
 	}{
-		{name: "zero", input: 0, want: []byte{208, 0}},
+		{name: "zero", input: 0, want: []byte{0}},
 		{name: "negative fixed int", input: -1, want: []byte{255}},
 		{name: "negative fixed int", input: -31, want: []byte{225}},
 		{name: "negative fixed int", input: -32, want: []byte{224}},
@@ -222,6 +223,48 @@ func TestWriteFloat64(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("WriteFloat32(false) is incorrect, got: %v, want: %v.", actual, expected)
+	}
+}
+
+func TestWriteString(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  []byte
+	}{
+		{name: "Empty String", input: "", want: []byte{160}},
+		{name: "5-char String", input: "hello", want: []byte{165, 104, 101, 108, 108, 111}},
+		{name: "11-char String", input: "hello world", want: []byte{171, 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100}},
+		{name: "31-char String", input: "-This string contains 31 chars-", want: []byte{191, 45, 84, 104, 105, 115, 32, 115, 116, 114, 105, 110, 103, 32, 99, 111, 110,
+			116, 97, 105, 110, 115, 32, 51, 49, 32, 99, 104, 97, 114, 115, 45}},
+		{name: "255-char String", input: "This is a str 8 string of 255 bytes " +
+			"AC53LgxLLOKm0hfsPa1V0nfMjXtnmkEttruCPjc51dtEMLRJIEu1YoRGd9" + "oXnM4CxcIiTc9V2DnAidZz22foIzc3kqHBoXgYskevfoJ5RK" +
+			"Yp52qvoDPufUebLksFl7astBNEnjPVUX2e3O9O6VKeUpB0iiHQXfzOOjTEK6Xy6ks4zAG2M6jCL01flIJlxplRXCV7 sadsadsadsadasdasaaaaa",
+			want: []byte{217, 255, 84, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 32, 56, 32, 115,
+				116, 114, 105, 110, 103, 32, 111, 102, 32, 50, 53, 53, 32, 98, 121, 116, 101, 115, 32,
+				65, 67, 53, 51, 76, 103, 120, 76, 76, 79, 75, 109, 48, 104, 102, 115, 80, 97, 49, 86,
+				48, 110, 102, 77, 106, 88, 116, 110, 109, 107, 69, 116, 116, 114, 117, 67, 80, 106, 99,
+				53, 49, 100, 116, 69, 77, 76, 82, 74, 73, 69, 117, 49, 89, 111, 82, 71, 100, 57, 111,
+				88, 110, 77, 52, 67, 120, 99, 73, 105, 84, 99, 57, 86, 50, 68, 110, 65, 105, 100, 90,
+				122, 50, 50, 102, 111, 73, 122, 99, 51, 107, 113, 72, 66, 111, 88, 103, 89, 115, 107,
+				101, 118, 102, 111, 74, 53, 82, 75, 89, 112, 53, 50, 113, 118, 111, 68, 80, 117, 102,
+				85, 101, 98, 76, 107, 115, 70, 108, 55, 97, 115, 116, 66, 78, 69, 110, 106, 80, 86, 85,
+				88, 50, 101, 51, 79, 57, 79, 54, 86, 75, 101, 85, 112, 66, 48, 105, 105, 72, 81, 88,
+				102, 122, 79, 79, 106, 84, 69, 75, 54, 88, 121, 54, 107, 115, 52, 122, 65, 71, 50, 77,
+				54, 106, 67, 76, 48, 49, 102, 108, 73, 74, 108, 120, 112, 108, 82, 88, 67, 86, 55, 32,
+				115, 97, 100, 115, 97, 100, 115, 97, 100, 115, 97, 100, 97, 115, 100, 97, 115, 97, 97,
+				97, 97, 97}},
+	}
+
+	for _, tc := range tests {
+		context := NewContext("")
+		writer := NewWriteEncoder(context)
+		writer.WriteString(tc.input)
+
+		got := writer.Buffer()
+		if !reflect.DeepEqual(tc.want, got) {
+			t.Errorf("%s (%s): expected: %v, got: %v", tc.name, tc.input, tc.want, got)
+		}
 	}
 }
 
