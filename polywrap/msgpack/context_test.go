@@ -63,16 +63,16 @@ func TestPrints(t *testing.T) {
 		t.Errorf("toString() is incorrect: \ngot \n%s \nwant \n%s", actual, expected)
 	}
 
-	actual = c.printWithContext("Invalid length")
+	actual = c.PrintWithContext("Invalid length")
 	expected = "Invalid length\n  Context: Deserializing MyObject\n    at propertyOne: unknown >> searching for property type"
 	if actual != expected {
-		t.Errorf("printWithContext() is incorrect: \ngot \n%s \nwant \n%s", actual, expected)
+		t.Errorf("PrintWithContext() is incorrect: \ngot \n%s \nwant \n%s", actual, expected)
 	}
 
 	c.Push("propertyOne", "i32", "type found, reading property")
-	actual = c.printWithContext("Invalid length")
+	actual = c.PrintWithContext("Invalid length")
 	expected = "Invalid length\n  Context: Deserializing MyObject\n    at propertyOne: i32 >> type found, reading property\n      at propertyOne: unknown >> searching for property type"
 	if actual != expected {
-		t.Errorf("printWithContext() is incorrect: \ngot \n%s \nwant \n%s", actual, expected)
+		t.Errorf("PrintWithContext() is incorrect: \ngot \n%s \nwant \n%s", actual, expected)
 	}
 }

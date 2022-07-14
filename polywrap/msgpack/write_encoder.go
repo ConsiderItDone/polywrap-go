@@ -156,13 +156,19 @@ func (we *WriteEncoder) WriteBytes(value []byte) {
 func (we *WriteEncoder) WriteMapLength(length uint32) {
 	if length < 16 {
 		we.view.WriteUint8(uint8(length) | uint8(format.FIXMAP))
+	} else if length <= math.MaxUint16 {
+		we.view.WriteUint8(uint8(format.MAP16))
+		we.view.WriteUint16(uint16(length))
+	} else {
+		we.view.WriteUint8(uint8(format.MAP32))
+		we.view.WriteUint32(length)
 	}
 }
 
 func (we *WriteEncoder) WriteArrayLength(length uint32) {
 	if length < 16 {
 		we.view.WriteUint8(uint8(length) | uint8(format.FIXARRAY))
-	} else if length < math.MaxUint16 {
+	} else if length <= math.MaxUint16 {
 		we.view.WriteFormat(format.ARRAY16)
 		we.view.WriteUint16(uint16(length))
 	} else {

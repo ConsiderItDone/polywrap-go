@@ -16,6 +16,7 @@ type Read interface {
 	ReadF64() float64
 	ReadBytesLength() uint32
 	ReadBytes() []byte
+	ReadMapLength() uint32
 	ReadStringLength() uint32
 	ReadString() string
 	ReadArrayLength() uint32
