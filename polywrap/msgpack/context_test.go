@@ -1,6 +1,9 @@
 package msgpack
 
-import "testing"
+import (
+	"runtime"
+	"testing"
+)
 
 func TestContextPushAndPop(t *testing.T) {
 	c := NewContext("some description")
@@ -33,17 +36,21 @@ func TestContextPushAndPop(t *testing.T) {
 	}
 }
 
-//func TestEmptyPop(t *testing.T) {
-//	defer func() {
-//		if r := recover(); r == nil {
-//			t.Errorf("The code did not panic")
-//		}
-//	}()
-//
-//	c := NewContext("some description")
-//
-//	c.Pop()
-//}
+func TestEmptyPop(t *testing.T) {
+	if runtime.Compiler == "tinygo" {
+		t.Log("Skipping due tinygo limitations")
+		return
+	}
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	c := NewContext("some description")
+
+	c.Pop()
+}
 
 func TestPrints(t *testing.T) {
 	c := NewContext("Deserializing MyObject")
