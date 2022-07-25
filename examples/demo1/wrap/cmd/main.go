@@ -5,7 +5,7 @@ import (
 	"github.com/consideritdone/polywrap-go/polywrap"
 )
 
-//export _w3_invoke
+//export _wrap_invoke
 func _wrap_invoke(methodSize, argsSize, envSize uint32) bool {
 	args := polywrap.WrapInvokeArgs(methodSize, argsSize)
 
