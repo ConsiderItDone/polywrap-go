@@ -50,7 +50,7 @@ func (c *Context) toString() string {
 	return c.printWithTabs(0, 2)
 }
 
-func (c *Context) printWithContext(message string) string {
+func (c *Context) PrintWithContext(message string) string {
 	return message + "\n" + c.printWithTabs(1, 2)
 }
 

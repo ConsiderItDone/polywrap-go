@@ -1,8 +1,6 @@
 package msgpack
 
 import (
-	"github.com/consideritdone/polywrap-go/polywrap/msgpack/json"
-	"github.com/valyala/fastjson"
 	"math"
 	"reflect"
 	"testing"

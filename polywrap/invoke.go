@@ -14,7 +14,7 @@ func __wrap_invoke_result(ptr, len uint32)
 //export __wrap_invoke_error
 func __wrap_invoke_error(ptr, len uint32)
 
-type invokeFunction func(argsBuf []byte) []byte
+type invokeFunction func(argsBuf []byte, envSize uint32) []byte
 
 type InvokeArgs struct {
 	Method string
@@ -38,9 +38,9 @@ func WrapInvokeArgs(methodSize, argsSize uint32) InvokeArgs {
 	}
 }
 
-func WrapInvoke(args InvokeArgs, fn invokeFunction) bool {
+func WrapInvoke(args InvokeArgs, envSize uint32, fn invokeFunction) bool {
 	if fn != nil {
-		result := fn(args.Args)
+		result := fn(args.Args, envSize)
 		resultPtr := unsafe.Pointer(&result)
 
 		__wrap_invoke_result(*(*uint32)(resultPtr), uint32(len(result)))
