@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func compare(t *testing.T, actual any, expected any) {
+func compare[T any](t *testing.T, actual T, expected T) {
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Bad value, got: %v, want: %v", actual, expected)
 	}
@@ -36,15 +36,6 @@ func TestOptionGet(t *testing.T) {
 	compare(t, ok1, true)
 	compare(t, v2, 0)
 	compare(t, ok2, false)
-}
-
-func TestOptionMustGet(t *testing.T) {
-	compare(t, Some(42).MustGet(), 42)
-
-	defer func() {
-		compare(t, recover(), ErrEmptyOption)
-	}()
-	compare(t, None[int]().MustGet(), 0)
 }
 
 func TestOptionOrElse(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 var err = errors.New("some test err")
 
 func TestResultOk(t *testing.T) {
-	compare(t, Ok(42), Result[int]{isErr: false, value: 42})
+	compare(t, AsResult(42, nil), Result[int]{value: 42, isErr: false, err: nil})
 }
 
 func TestResultErr(t *testing.T) {
@@ -37,15 +37,6 @@ func TestResultGet(t *testing.T) {
 	compare(t, err1, nil)
 	compare(t, v2, 0)
 	compare(t, err2, err)
-}
-
-func TestResultMustGet(t *testing.T) {
-	compare(t, Ok(42).MustGet(), 42)
-
-	defer func() {
-		compare(t, recover(), err)
-	}()
-	compare(t, Err[int](err).MustGet(), 0)
 }
 
 func TestResultOrElse(t *testing.T) {
