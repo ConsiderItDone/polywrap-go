@@ -1,10 +1,14 @@
 package container
 
-type Result[T any] struct {
-	value T
-	err   error
-	isErr bool
-}
+type (
+	Result[T any] struct {
+		value T
+		err   error
+		isErr bool
+	}
+	ResultResolver[T any] func(T) (T, error)
+	ResultRejecter[T any] func(error) (T, error)
+)
 
 func AsResult[T any](value T, err error) Result[T] {
 	if err != nil {
@@ -60,7 +64,7 @@ func (r Result[T]) OrElse(fallback T) T {
 	return r.value
 }
 
-func (r Result[T]) Match(onSuccess func(value T) (T, error), onError func(err error) (T, error)) Result[T] {
+func (r Result[T]) Match(onSuccess ResultResolver[T], onError ResultRejecter[T]) Result[T] {
 	var (
 		v T
 		e error

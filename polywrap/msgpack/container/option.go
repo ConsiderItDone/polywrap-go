@@ -6,10 +6,14 @@ var (
 	ErrEmptyOption = errors.New("no such element")
 )
 
-type Option[T any] struct {
-	isValue bool
-	value   T
-}
+type (
+	Option[T any] struct {
+		isValue bool
+		value   T
+	}
+	OptionResolver[T any] func(T) (T, bool)
+	OptionRejecter[T any] func() (T, bool)
+)
 
 func Some[T any](value T) Option[T] {
 	return Option[T]{
@@ -53,7 +57,7 @@ func (o Option[T]) OrElse(fallback T) T {
 	return o.value
 }
 
-func (o Option[T]) Match(onValue func(value T) (T, bool), onNone func() (T, bool)) Option[T] {
+func (o Option[T]) Match(onValue OptionResolver[T], onNone OptionRejecter[T]) Option[T] {
 	var (
 		v  T
 		ok bool
