@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/container"
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
 	"github.com/valyala/fastjson"
 )
@@ -21,8 +22,8 @@ func (rd *ReadDecoder) Context() *Context {
 	return rd.context
 }
 
-func (rd *ReadDecoder) IsNil() bool {
-	return rd.view.ReadFormat() == format.NIL
+func (rd ReadDecoder) IsNil() bool {
+	return rd.view.PeekFormat() == format.NIL
 }
 
 func (rd *ReadDecoder) ReadBool() bool {
@@ -261,6 +262,104 @@ func (rd *ReadDecoder) ReadBigInt() *big.Int {
 		panic(rd.context.PrintWithContext("Property must be of type 'BigInt'. Found ..."))
 	}
 	return val
+}
+
+func (rd *ReadDecoder) ReadOptionalBool() container.Option[bool] {
+	if rd.IsNil() {
+		return container.None[bool]()
+	}
+	return container.Some(rd.ReadBool())
+}
+
+func (rd *ReadDecoder) ReadOptionalI8() container.Option[int8] {
+	if rd.IsNil() {
+		return container.None[int8]()
+	}
+	return container.Some(rd.ReadI8())
+}
+
+func (rd *ReadDecoder) ReadOptionalI16() container.Option[int16] {
+	if rd.IsNil() {
+		return container.None[int16]()
+	}
+	return container.Some(rd.ReadI16())
+}
+
+func (rd *ReadDecoder) ReadOptionalI32() container.Option[int32] {
+	if rd.IsNil() {
+		return container.None[int32]()
+	}
+	return container.Some(rd.ReadI32())
+}
+
+func (rd *ReadDecoder) ReadOptionalI64() container.Option[int64] {
+	if rd.IsNil() {
+		return container.None[int64]()
+	}
+	return container.Some(rd.ReadI64())
+}
+
+func (rd *ReadDecoder) ReadOptionalU8() container.Option[uint8] {
+	if rd.IsNil() {
+		return container.None[uint8]()
+	}
+	return container.Some(rd.ReadU8())
+}
+
+func (rd *ReadDecoder) ReadOptionalU16() container.Option[uint16] {
+	if rd.IsNil() {
+		return container.None[uint16]()
+	}
+	return container.Some(rd.ReadU16())
+}
+
+func (rd *ReadDecoder) ReadOptionalU32() container.Option[uint32] {
+	if rd.IsNil() {
+		return container.None[uint32]()
+	}
+	return container.Some(rd.ReadU32())
+}
+
+func (rd *ReadDecoder) ReadOptionalU64() container.Option[uint64] {
+	if rd.IsNil() {
+		return container.None[uint64]()
+	}
+	return container.Some(rd.ReadU64())
+}
+
+func (rd *ReadDecoder) ReadOptionalF32() container.Option[float32] {
+	if rd.IsNil() {
+		return container.None[float32]()
+	}
+	return container.Some(rd.ReadF32())
+}
+
+func (rd *ReadDecoder) ReadOptionalF64() container.Option[float64] {
+	if rd.IsNil() {
+		return container.None[float64]()
+	}
+	return container.Some(rd.ReadF64())
+}
+
+func (rd *ReadDecoder) ReadOptionalBytes() container.Option[[]byte] {
+	if rd.IsNil() {
+		return container.None[[]byte]()
+	}
+	return container.Some(rd.ReadBytes())
+}
+
+func (rd *ReadDecoder) ReadOptionalString() container.Option[string] {
+	if rd.IsNil() {
+		return container.None[string]()
+	}
+	return container.Some(rd.ReadString())
+}
+
+func (rd *ReadDecoder) ReadOptionalArray(fn func(reader Read) any) container.Option[[]any] {
+	if rd.IsNil() {
+		return container.None[[]any]()
+	}
+	return container.Some(rd.ReadArray(fn))
 }
 
 func isFixedInt(v uint8) bool {

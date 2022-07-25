@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/container"
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
 	"github.com/valyala/fastjson"
 )
@@ -210,4 +211,116 @@ func (we *WriteEncoder) WriteBigInt(value *big.Int) {
 		return
 	}
 	we.WriteString(value.String())
+}
+
+func (we *WriteEncoder) WriteOptionalBool(value container.Option[bool]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteBool(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalI8(value container.Option[int8]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteI8(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalI16(value container.Option[int16]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteI16(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalI32(value container.Option[int32]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteI32(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalI64(value container.Option[int64]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteI64(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalU8(value container.Option[uint8]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteU8(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalU16(value container.Option[uint16]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteU16(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalU32(value container.Option[uint32]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteU32(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalU64(value container.Option[uint64]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteU64(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalFloat32(value container.Option[float32]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteFloat32(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalFloat64(value container.Option[float64]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteFloat64(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalString(value container.Option[string]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteString(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalBytes(value container.Option[[]byte]) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteBytes(value.MustGet())
+}
+
+func (we *WriteEncoder) WriteOptionalArray(value container.Option[[]any], fn func(encoder Write, item any)) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	we.WriteArray(value.MustGet(), fn)
 }
