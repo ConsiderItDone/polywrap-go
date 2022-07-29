@@ -1,5 +1,10 @@
 package msgpack
 
+import (
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
+	"github.com/valyala/fastjson"
+)
+
 type Read interface {
 	Context() *Context
 	IsNil() bool
@@ -17,8 +22,11 @@ type Read interface {
 	ReadBytesLength() uint32
 	ReadBytes() []byte
 	ReadMapLength() uint32
+	ReadMap(fn func(reader Read) (any, any)) map[any]any
 	ReadStringLength() uint32
 	ReadString() string
 	ReadArrayLength() uint32
 	ReadArray(fn func(reader Read) any) []any
+	ReadJson() *fastjson.Value
+	ReadBigInt() *big.Int
 }

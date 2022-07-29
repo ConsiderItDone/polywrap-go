@@ -3,7 +3,9 @@ package msgpack
 import (
 	"math"
 
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
+	"github.com/valyala/fastjson"
 )
 
 type ReadDecoder struct {
@@ -152,30 +154,42 @@ func (rd *ReadDecoder) ReadBytesLength() uint32 {
 }
 
 func (rd *ReadDecoder) ReadBytes() []byte {
-	rd.ReadBytesLength()
-	return rd.view.ReadBytes()
+	return rd.view.ReadBytes(rd.ReadBytesLength())
 }
 
 func (rd *ReadDecoder) ReadMapLength() uint32 {
 	f := rd.view.ReadFormat()
+	if f == format.NIL {
+		return 0
+	}
 	if isFixedMap(uint8(f)) {
 		return uint32(f & format.FOUR_LEAST_SIG_BITS_IN_BYTE)
 	}
 	switch f {
-	case format.NIL:
-		return 0
 	case format.MAP16:
 		return uint32(rd.view.ReadUint16())
 	case format.MAP32:
 		return rd.view.ReadUint32()
+	case format.NIL:
+		return 0
 	}
 	panic(rd.context.PrintWithContext("Property must be of type 'map'. Found ..."))
+}
+
+func (rd *ReadDecoder) ReadMap(fn func(reader Read) (any, any)) map[any]any {
+	size := rd.ReadMapLength()
+	data := make(map[any]any)
+	for i := uint32(0); i < size; i++ {
+		k, v := fn(rd)
+		data[k] = v
+	}
+	return data
 }
 
 func (rd *ReadDecoder) ReadStringLength() uint32 {
 	f := rd.view.ReadFormat()
 	if isFixedString(uint8(f)) {
-		return uint32(f & 0x1f)
+		return uint32(uint8(f) & 0x1f)
 	}
 	if isFixedArray(uint8(f)) {
 		return uint32(f & format.FOUR_LEAST_SIG_BITS_IN_BYTE)
@@ -194,10 +208,11 @@ func (rd *ReadDecoder) ReadStringLength() uint32 {
 }
 
 func (rd *ReadDecoder) ReadString() string {
-	if rd.ReadStringLength() == 0 {
+	ln := rd.ReadStringLength()
+	if ln == 0 {
 		return ""
 	}
-	return rd.view.ReadString()
+	return string(rd.view.ReadBytes(ln))
 }
 
 func (rd *ReadDecoder) ReadArrayLength() uint32 {
@@ -226,6 +241,26 @@ func (rd *ReadDecoder) ReadArray(fn func(reader Read) any) []any {
 		data[i] = fn(rd)
 	}
 	return data
+}
+
+func (rd *ReadDecoder) ReadJson() *fastjson.Value {
+	tmp := rd.ReadString()
+	if tmp == "" {
+		return nil
+	}
+	return fastjson.MustParse(tmp)
+}
+
+func (rd *ReadDecoder) ReadBigInt() *big.Int {
+	tmp := rd.ReadString()
+	if tmp == "" {
+		return nil
+	}
+	val, ok := new(big.Int).SetString(tmp, 10)
+	if !ok {
+		panic(rd.context.PrintWithContext("Property must be of type 'BigInt'. Found ..."))
+	}
+	return val
 }
 
 func isFixedInt(v uint8) bool {
