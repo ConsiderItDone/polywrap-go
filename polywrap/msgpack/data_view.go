@@ -209,6 +209,11 @@ func (dw *DataView) WriteBytes(value []byte) {
 	dw.buf.Write(value)
 }
 
-func (dw *DataView) ReadBytes() []byte {
-	return dw.buf.Bytes()
+func (dw *DataView) ReadBytes(ln uint32) []byte {
+	tmp := make([]byte, ln)
+	err := binary.Read(dw.buf, binary.BigEndian, tmp)
+	if err != nil {
+		panic("ReadFloat64 error " + err.Error())
+	}
+	return tmp
 }

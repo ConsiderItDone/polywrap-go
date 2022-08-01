@@ -5,7 +5,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
+	"github.com/valyala/fastjson"
 )
 
 type readcase struct {
@@ -13,7 +15,8 @@ type readcase struct {
 	bytes  []byte
 	format format.Format
 	value  interface{}
-	fn     func(reader Read) any
+	fn1    func(reader Read) any
+	fn2    func(reader Read) (any, any)
 }
 
 func runcases(t *testing.T, cases []readcase) {
@@ -54,11 +57,17 @@ func runcases(t *testing.T, cases []readcase) {
 			case format.BIN8, format.BIN16, format.BIN32:
 				v = reader.ReadBytes()
 			case format.ARRAY16, format.ARRAY32:
-				v = reader.ReadArray(cases[i].fn)
+				v = reader.ReadArray(cases[i].fn1)
+			case format.MAP16, format.MAP32:
+				v = reader.ReadMap(cases[i].fn2)
+			case format.Format(0):
+				v = reader.ReadBigInt()
+			case format.Format(1):
+				v = reader.ReadJson()
 			default:
 				t.Fatal("unknown format")
 			}
-			if !reflect.DeepEqual(tcase.value, v) {
+			if (v == nil && tcase.value == nil) && !reflect.DeepEqual(tcase.value, v) {
 				t.Errorf("Bad value, got: %v, want: %v", v, tcase.value)
 			}
 		})
@@ -333,14 +342,14 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{192},
 			format: format.ARRAY16,
 			value:  []any{},
-			fn:     nil,
+			fn1:    nil,
 		},
 		{
 			name:   "[]int8",
 			bytes:  []byte{146, 208, 128, 127},
 			format: format.ARRAY16,
 			value:  []any{int8(math.MinInt8), int8(math.MaxInt8)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadI8()
 			},
 		},
@@ -349,7 +358,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 209, 128, 0, 209, 127, 255},
 			format: format.ARRAY16,
 			value:  []any{int16(math.MinInt16), int16(math.MaxInt16)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadI16()
 			},
 		},
@@ -358,7 +367,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
 			format: format.ARRAY16,
 			value:  []any{int32(math.MinInt32), int32(math.MaxInt32)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadI32()
 			},
 		},
@@ -367,7 +376,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
 			format: format.ARRAY16,
 			value:  []any{int64(math.MinInt64), int64(math.MaxInt64)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadI64()
 			},
 		},
@@ -377,7 +386,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 0, 204, 255},
 			format: format.ARRAY16,
 			value:  []any{uint8(0), uint8(math.MaxUint8)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadU8()
 			},
 		},
@@ -386,7 +395,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 0, 205, 255, 255},
 			format: format.ARRAY16,
 			value:  []any{uint16(0), uint16(math.MaxUint16)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadU16()
 			},
 		},
@@ -395,7 +404,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 0, 206, 255, 255, 255, 255},
 			format: format.ARRAY16,
 			value:  []any{uint32(0), uint32(math.MaxUint32)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadU32()
 			},
 		},
@@ -404,7 +413,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
 			format: format.ARRAY16,
 			value:  []any{uint64(0), uint64(math.MaxUint64)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadU64()
 			},
 		},
@@ -413,7 +422,7 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
 			format: format.ARRAY16,
 			value:  []any{float32(0.6046603), float32(0.9405091)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadF32()
 			},
 		},
@@ -422,9 +431,91 @@ func TestReadArray(t *testing.T) {
 			bytes:  []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
 			format: format.ARRAY16,
 			value:  []any{float64(0.6645600532184904), float64(0.4377141871869802)},
-			fn: func(reader Read) any {
+			fn1: func(reader Read) any {
 				return reader.ReadF64()
 			},
+		},
+	})
+}
+
+func TestReadMap(t *testing.T) {
+	runcases(t, []readcase{
+		{
+			name:   "nil",
+			bytes:  []byte{192},
+			format: format.MAP16,
+			value:  map[any]any{},
+			fn2:    nil,
+		},
+		{
+			name:   "map[string]int64",
+			bytes:  []byte{131, 164, 107, 101, 121, 51, 3, 164, 107, 101, 121, 49, 1, 164, 107, 101, 121, 50, 2},
+			format: format.MAP16,
+			value: map[any]any{
+				"key1": int64(1),
+				"key2": int64(2),
+				"key3": int64(3),
+			},
+			fn2: func(reader Read) (any, any) {
+				key := reader.ReadString()
+				val := reader.ReadI64()
+				return key, val
+			},
+		},
+		{
+			name:   "map[string]string",
+			bytes:  []byte{131, 164, 107, 101, 121, 49, 164, 118, 97, 108, 49, 164, 107, 101, 121, 50, 164, 118, 97, 108, 50, 164, 107, 101, 121, 51, 164, 118, 97, 108, 51},
+			format: format.MAP16,
+			value: map[any]any{
+				"key1": "val1",
+				"key2": "val2",
+				"key3": "val3",
+			},
+			fn2: func(reader Read) (any, any) {
+				key := reader.ReadString()
+				val := reader.ReadString()
+				return key, val
+			},
+		},
+	})
+}
+
+func TestReadBigInt(t *testing.T) {
+	runcases(t, []readcase{
+		{
+			name:   "nil",
+			bytes:  []byte{192},
+			format: format.Format(0),
+			value:  nil,
+		},
+		{
+			name:   "zero",
+			bytes:  []byte{161, 48},
+			format: format.Format(0),
+			value:  big.NewInt(0),
+		},
+		{
+			name:   "maxInt64",
+			bytes:  []byte{179, 57, 50, 50, 51, 51, 55, 50, 48, 51, 54, 56, 53, 52, 55, 55, 53, 56, 48, 55},
+			format: format.Format(0),
+			value:  big.NewInt(math.MaxInt64),
+		},
+	})
+}
+
+func TestReadJson(t *testing.T) {
+	runcases(t, []readcase{
+		{
+			name:   "nil",
+			bytes:  []byte{192},
+			format: format.Format(1),
+			value:  nil,
+		},
+		{
+			name:   "obj",
+			bytes:  []byte{217, 38, 123, 34, 107, 101, 121, 49, 34, 58, 49, 44, 34, 107, 101, 121, 50, 34, 58, 34, 115, 116, 114, 105, 110, 103, 34, 44, 34, 107, 101, 121, 51, 34, 58, 116, 114, 117, 101, 125},
+			format: format.Format(1),
+			value:  fastjson.MustParse(`{"key1":1,"key2":"string","key3":true}`),
 		},
 	})
 }

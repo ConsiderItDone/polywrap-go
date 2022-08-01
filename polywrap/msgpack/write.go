@@ -1,5 +1,10 @@
 package msgpack
 
+import (
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
+	"github.com/valyala/fastjson"
+)
+
 type Write interface {
 	Context() *Context
 	WriteNil()
@@ -19,6 +24,9 @@ type Write interface {
 	WriteBytesLength(length uint32)
 	WriteBytes(value []byte)
 	WriteMapLength(length uint32)
+	WriteMap(value map[any]any, fn func(encoder Write, key any, value any))
 	WriteArrayLength(length uint32)
 	WriteArray(value []any, fn func(encoder Write, item any))
+	WriteJson(data *fastjson.Value)
+	WriteBigInt(value *big.Int)
 }

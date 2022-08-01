@@ -1,9 +1,13 @@
 package msgpack
 
 import (
+	"bytes"
 	"math"
 	"reflect"
 	"testing"
+
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
+	"github.com/valyala/fastjson"
 )
 
 func TestWriteNil(t *testing.T) {
@@ -387,5 +391,130 @@ func TestWriteArray(t *testing.T) {
 				t.Errorf("TestWriteArray(%s) is incorrect, got: %v, want: %v.", tcase.name, actual, tcase.expected)
 			}
 		})
+	}
+}
+
+func TestWriteMap(t *testing.T) {
+	cases := []struct {
+		name   string
+		data   map[any]any
+		prefix []byte
+		parts  [][]byte
+		fn     func(encoder Write, key any, value any)
+	}{
+		{
+			name: "map[int8]int64",
+			data: map[any]any{
+				int8(1): int64(1),
+				int8(2): int64(2),
+				int8(3): int64(3),
+			},
+			prefix: []byte{131},
+			parts:  [][]byte{{1, 1}, {2, 2}, {3, 3}},
+			fn: func(encoder Write, key any, value any) {
+				k := key.(int8)
+				encoder.WriteI8(k)
+				v := value.(int64)
+				encoder.WriteI64(v)
+			},
+		},
+		{
+			name: "map[int8]string",
+			data: map[any]any{
+				int8(1): "1",
+				int8(2): "2",
+				int8(3): "3",
+			},
+			prefix: []byte{131},
+			parts:  [][]byte{{1, 161, 49}, {2, 161, 50}, {3, 161, 51}},
+			fn: func(encoder Write, key any, value any) {
+				k := key.(int8)
+				encoder.WriteI8(k)
+				v := value.(string)
+				encoder.WriteString(v)
+			},
+		},
+		{
+			name: "map[string]string",
+			data: map[any]any{
+				"key1": "value1",
+				"key2": "value2",
+				"key3": "value3",
+			},
+			prefix: []byte{131},
+			parts: [][]byte{
+				{164, 107, 101, 121, 49, 166, 118, 97, 108, 117, 101, 49},
+				{164, 107, 101, 121, 50, 166, 118, 97, 108, 117, 101, 50},
+				{164, 107, 101, 121, 51, 166, 118, 97, 108, 117, 101, 51},
+			},
+			fn: func(encoder Write, key any, value any) {
+				k := key.(string)
+				encoder.WriteString(k)
+				v := value.(string)
+				encoder.WriteString(v)
+			},
+		},
+	}
+	for i := range cases {
+		tcase := cases[i]
+		t.Run(tcase.name, func(t *testing.T) {
+			context := NewContext("")
+			writer := NewWriteEncoder(context)
+			writer.WriteMap(tcase.data, tcase.fn)
+			actual := writer.Buffer()
+			if !bytes.HasPrefix(actual, tcase.prefix) {
+				t.Errorf("TestWriteMap(%s) has bad prefix, got: %v, want: %v.", tcase.name, actual[0:len(tcase.prefix)], tcase.prefix)
+			}
+			for j := range tcase.parts {
+				if !bytes.Contains(actual, tcase.parts[j]) {
+					t.Errorf("TestWriteMap(%s) bytes doesnt have test part, got: %v, want: %v.", tcase.name, actual, tcase.parts[j])
+				}
+			}
+		})
+	}
+}
+
+func TestWriteBigInt(t *testing.T) {
+	tests := []struct {
+		name  string
+		input *big.Int
+		want  []byte
+	}{
+		{name: "nil", input: nil, want: []byte{192}},
+		{name: "zero", input: big.NewInt(0), want: []byte{161, 48}},
+		{name: "maxInt64", input: big.NewInt(math.MaxInt64), want: []byte{179, 57, 50, 50, 51, 51, 55, 50, 48, 51, 54, 56, 53, 52, 55, 55, 53, 56, 48, 55}},
+	}
+
+	for _, tc := range tests {
+		context := NewContext("")
+		writer := NewWriteEncoder(context)
+		writer.WriteBigInt(tc.input)
+
+		got := writer.Buffer()
+		if !reflect.DeepEqual(tc.want, got) {
+			t.Errorf("%s (%s): expected: %v, got: %v", tc.name, tc.input, tc.want, got)
+		}
+	}
+}
+
+func TestWriteJSON(t *testing.T) {
+	tests := []struct {
+		name  string
+		input *fastjson.Value
+		want  []byte
+	}{
+		{name: "nil", input: nil, want: []byte{192}},
+		{name: "obj", input: fastjson.MustParse(`{"key1":1,"key2":"string","key3":true}`), want: []byte{217, 38, 123, 34, 107, 101, 121, 49, 34, 58, 49, 44, 34, 107, 101, 121, 50, 34, 58, 34, 115, 116, 114, 105, 110, 103, 34, 44, 34, 107, 101, 121, 51, 34, 58, 116, 114, 117, 101, 125}},
+	}
+
+	for _, tc := range tests {
+		context := NewContext("")
+		writer := NewWriteEncoder(context)
+		writer.WriteJson(tc.input)
+
+		got := writer.Buffer()
+		if !reflect.DeepEqual(tc.want, got) {
+			t.Errorf("%s (%s): expected: %v, got: %v", tc.name, tc.input, tc.want, got)
+		}
 	}
 }

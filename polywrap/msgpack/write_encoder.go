@@ -1,10 +1,11 @@
 package msgpack
 
 import (
-	"github.com/valyala/fastjson"
 	"math"
 
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
+	"github.com/valyala/fastjson"
 )
 
 type WriteEncoder struct {
@@ -165,6 +166,13 @@ func (we *WriteEncoder) WriteMapLength(length uint32) {
 	}
 }
 
+func (we *WriteEncoder) WriteMap(value map[any]any, fn func(encoder Write, key any, value any)) {
+	we.WriteMapLength(uint32(len(value)))
+	for key := range value {
+		fn(we, key, value[key])
+	}
+}
+
 func (we *WriteEncoder) WriteArrayLength(length uint32) {
 	if length < 16 {
 		we.view.WriteUint8(uint8(length) | uint8(format.FIXARRAY))
@@ -188,7 +196,18 @@ func (we *WriteEncoder) WriteArray(value []any, fn func(encoder Write, item any)
 	}
 }
 
-func (we *WriteEncoder) WriteJson(data *fastjson.Value) {
-	str := data.String()
-	we.WriteString(str)
+func (we *WriteEncoder) WriteJson(value *fastjson.Value) {
+	if value == nil {
+		we.WriteNil()
+		return
+	}
+	we.WriteString(value.String())
+}
+
+func (we *WriteEncoder) WriteBigInt(value *big.Int) {
+	if value == nil {
+		we.WriteNil()
+		return
+	}
+	we.WriteString(value.String())
 }
