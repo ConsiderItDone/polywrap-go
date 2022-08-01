@@ -1,6 +1,7 @@
 package msgpack
 
 import (
+	"bytes"
 	"math"
 	"reflect"
 	"testing"
@@ -395,10 +396,11 @@ func TestWriteArray(t *testing.T) {
 
 func TestWriteMap(t *testing.T) {
 	cases := []struct {
-		name     string
-		data     map[any]any
-		expected []byte
-		fn       func(encoder Write, key any, value any)
+		name   string
+		data   map[any]any
+		prefix []byte
+		parts  [][]byte
+		fn     func(encoder Write, key any, value any)
 	}{
 		{
 			name: "map[int8]int64",
@@ -407,7 +409,8 @@ func TestWriteMap(t *testing.T) {
 				int8(2): int64(2),
 				int8(3): int64(3),
 			},
-			expected: []byte{131, 1, 1, 2, 2, 3, 3},
+			prefix: []byte{131},
+			parts:  [][]byte{{1, 1}, {2, 2}, {3, 3}},
 			fn: func(encoder Write, key any, value any) {
 				k := key.(int8)
 				encoder.WriteI8(k)
@@ -422,10 +425,31 @@ func TestWriteMap(t *testing.T) {
 				int8(2): "2",
 				int8(3): "3",
 			},
-			expected: []byte{131, 1, 161, 49, 2, 161, 50, 3, 161, 51},
+			prefix: []byte{131},
+			parts:  [][]byte{{1, 161, 49}, {2, 161, 50}, {3, 161, 51}},
 			fn: func(encoder Write, key any, value any) {
 				k := key.(int8)
 				encoder.WriteI8(k)
+				v := value.(string)
+				encoder.WriteString(v)
+			},
+		},
+		{
+			name: "map[string]string",
+			data: map[any]any{
+				"key1": "value1",
+				"key2": "value2",
+				"key3": "value3",
+			},
+			prefix: []byte{131},
+			parts: [][]byte{
+				{164, 107, 101, 121, 49, 166, 118, 97, 108, 117, 101, 49},
+				{164, 107, 101, 121, 50, 166, 118, 97, 108, 117, 101, 50},
+				{164, 107, 101, 121, 51, 166, 118, 97, 108, 117, 101, 51},
+			},
+			fn: func(encoder Write, key any, value any) {
+				k := key.(string)
+				encoder.WriteString(k)
 				v := value.(string)
 				encoder.WriteString(v)
 			},
@@ -437,11 +461,14 @@ func TestWriteMap(t *testing.T) {
 			context := NewContext("")
 			writer := NewWriteEncoder(context)
 			writer.WriteMap(tcase.data, tcase.fn)
-
 			actual := writer.Buffer()
-			if !reflect.DeepEqual(actual, tcase.expected) {
-				t.Logf("%#+v", tcase)
-				t.Errorf("TestWriteMap(%s) is incorrect, got: %v, want: %v.", tcase.name, actual, tcase.expected)
+			if !bytes.HasPrefix(actual, tcase.prefix) {
+				t.Errorf("TestWriteMap(%s) has bad prefix, got: %v, want: %v.", tcase.name, actual[0:len(tcase.prefix)], tcase.prefix)
+			}
+			for j := range tcase.parts {
+				if !bytes.Contains(actual, tcase.parts[j]) {
+					t.Errorf("TestWriteMap(%s) bytes doesnt have test part, got: %v, want: %v.", tcase.name, actual, tcase.parts[j])
+				}
 			}
 		})
 	}
