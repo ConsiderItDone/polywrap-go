@@ -14,20 +14,12 @@ import (
 type writecase struct {
 	name   string
 	format string
-	value  any
+	value  interface{}
 	bytes  []byte
 	prefix []byte
 	parts  [][]byte
-	fn1    func(encoder Write, item any)
-	fn2    func(encoder Write, key any, value any)
-}
-
-func cast[T any](t *testing.T, value any) T {
-	v, ok := value.(T)
-	if !ok {
-		t.Fatal("can't cast type")
-	}
-	return v
+	fn1    func(encoder Write, item interface{})
+	fn2    func(encoder Write, key interface{}, value interface{})
 }
 
 func runWriteCases(t *testing.T, cases []writecase) {
@@ -40,83 +32,89 @@ func runWriteCases(t *testing.T, cases []writecase) {
 			case "nil":
 				writer.WriteNil()
 			case "bool":
-				writer.WriteBool(cast[bool](t, tcase.value))
+				writer.WriteBool(tcase.value.(bool))
 			case "bool?":
-				writer.WriteOptionalBool(cast[container.Option[bool]](t, tcase.value))
+				writer.WriteOptionalBool(tcase.value.(container.Option))
 			case "int8":
-				writer.WriteI8(cast[int8](t, tcase.value))
+				writer.WriteI8(tcase.value.(int8))
 			case "int8?":
-				writer.WriteOptionalI8(cast[container.Option[int8]](t, tcase.value))
+				writer.WriteOptionalI8(tcase.value.(container.Option))
 			case "int16":
-				writer.WriteI16(cast[int16](t, tcase.value))
+				writer.WriteI16(tcase.value.(int16))
 			case "int16?":
-				writer.WriteOptionalI16(cast[container.Option[int16]](t, tcase.value))
+				writer.WriteOptionalI16(tcase.value.(container.Option))
 			case "int32":
-				writer.WriteI32(cast[int32](t, tcase.value))
+				writer.WriteI32(tcase.value.(int32))
 			case "int32?":
-				writer.WriteOptionalI32(cast[container.Option[int32]](t, tcase.value))
+				writer.WriteOptionalI32(tcase.value.(container.Option))
 			case "int64":
-				writer.WriteI64(cast[int64](t, tcase.value))
+				writer.WriteI64(tcase.value.(int64))
 			case "int64?":
-				writer.WriteOptionalI64(cast[container.Option[int64]](t, tcase.value))
+				writer.WriteOptionalI64(tcase.value.(container.Option))
 			case "uint8":
-				writer.WriteU8(cast[uint8](t, tcase.value))
+				writer.WriteU8(tcase.value.(uint8))
 			case "uint8?":
-				writer.WriteOptionalU8(cast[container.Option[uint8]](t, tcase.value))
+				writer.WriteOptionalU8(tcase.value.(container.Option))
 			case "uint16":
-				writer.WriteU16(cast[uint16](t, tcase.value))
+				writer.WriteU16(tcase.value.(uint16))
 			case "uint16?":
-				writer.WriteOptionalU16(cast[container.Option[uint16]](t, tcase.value))
+				writer.WriteOptionalU16(tcase.value.(container.Option))
 			case "uint32":
-				writer.WriteU32(cast[uint32](t, tcase.value))
+				writer.WriteU32(tcase.value.(uint32))
 			case "uint32?":
-				writer.WriteOptionalU32(cast[container.Option[uint32]](t, tcase.value))
+				writer.WriteOptionalU32(tcase.value.(container.Option))
 			case "uint64":
-				writer.WriteU64(cast[uint64](t, tcase.value))
+				writer.WriteU64(tcase.value.(uint64))
 			case "uint64?":
-				writer.WriteOptionalU64(cast[container.Option[uint64]](t, tcase.value))
+				writer.WriteOptionalU64(tcase.value.(container.Option))
 			case "float32":
-				writer.WriteFloat32(cast[float32](t, tcase.value))
+				writer.WriteFloat32(tcase.value.(float32))
 			case "float32?":
-				writer.WriteOptionalFloat32(cast[container.Option[float32]](t, tcase.value))
+				writer.WriteOptionalFloat32(tcase.value.(container.Option))
 			case "float64":
-				writer.WriteFloat64(cast[float64](t, tcase.value))
+				writer.WriteFloat64(tcase.value.(float64))
 			case "float64?":
-				writer.WriteOptionalFloat64(cast[container.Option[float64]](t, tcase.value))
+				writer.WriteOptionalFloat64(tcase.value.(container.Option))
 			case "string":
-				writer.WriteString(cast[string](t, tcase.value))
+				writer.WriteString(tcase.value.(string))
 			case "string?":
-				writer.WriteOptionalString(cast[container.Option[string]](t, tcase.value))
+				writer.WriteOptionalString(tcase.value.(container.Option))
 			case "bytes":
-				writer.WriteBytes(cast[[]byte](t, tcase.value))
+				writer.WriteBytes(tcase.value.([]byte))
 			case "bytes?":
-				writer.WriteOptionalBytes(cast[container.Option[[]byte]](t, tcase.value))
+				writer.WriteOptionalBytes(tcase.value.(container.Option))
 			case "array":
 				if tcase.value == nil {
 					writer.WriteArray(nil, tcase.fn1)
 				} else {
-					writer.WriteArray(cast[[]any](t, tcase.value), tcase.fn1)
+					writer.WriteArray(tcase.value.([]interface{}), tcase.fn1)
 				}
 			case "array?":
-				writer.WriteOptionalArray(cast[container.Option[[]any]](t, tcase.value), tcase.fn1)
+				writer.WriteOptionalArray(tcase.value.(container.Option), tcase.fn1)
 			case "bigint":
 				if tcase.value == nil {
 					writer.WriteBigInt(nil)
 				} else {
-					writer.WriteBigInt(cast[*big.Int](t, tcase.value))
+					writer.WriteBigInt(tcase.value.(*big.Int))
 				}
+			case "bigint?":
+				writer.WriteOptionalBigInt(tcase.value.(container.Option))
 			case "json":
 				if tcase.value == nil {
 					writer.WriteJson(nil)
 				} else {
-					writer.WriteJson(cast[*fastjson.Value](t, tcase.value))
+					writer.WriteJson(tcase.value.(*fastjson.Value))
 				}
+			case "json?":
+				writer.WriteOptionalJson(tcase.value.(container.Option))
 			case "map":
-				writer.WriteMap(cast[map[any]any](t, tcase.value), tcase.fn2)
+				writer.WriteMap(tcase.value.(map[interface{}]interface{}), tcase.fn2)
+			case "map?":
+				writer.WriteOptionalMap(tcase.value.(container.Option), tcase.fn2)
 			default:
 				t.Fatal("unknown format")
 			}
-			if tcase.format == "map" {
+			if tcase.format == "map" || tcase.format == "map?" {
 				tmp := writer.Buffer()
 				if !bytes.HasPrefix(tmp, tcase.prefix) {
 					t.Errorf("Bad prefix, got: %v, want: %v.", tmp[0:len(tcase.prefix)], tcase.prefix)
@@ -162,7 +160,7 @@ func TestWriteBool(t *testing.T) {
 		{
 			name:   "can write optional nil",
 			format: "bool?",
-			value:  container.None[bool](),
+			value:  container.None(),
 			bytes:  []byte{192},
 		},
 	})
@@ -179,7 +177,7 @@ func TestWriteI8(t *testing.T) {
 		{name: "8-bit signed int", format: "int8", value: int8(-128), bytes: []byte{208, 128}},
 		{name: "8-bit signed int", format: "int8", value: int8(-100), bytes: []byte{208, 156}},
 		{name: "8-bit signed int", format: "int8", value: int8(-33), bytes: []byte{208, 223}},
-		{name: "optional nil", format: "int8?", value: container.None[int8](), bytes: []byte{192}},
+		{name: "optional nil", format: "int8?", value: container.None(), bytes: []byte{192}},
 		{name: "optional zero", format: "int8?", value: container.Some(int8(0)), bytes: []byte{0}},
 		{name: "optional negative fixed int", format: "int8?", value: container.Some(int8(-1)), bytes: []byte{255}},
 		{name: "optional negative fixed int", format: "int8?", value: container.Some(int8(-31)), bytes: []byte{225}},
@@ -199,7 +197,7 @@ func TestWriteI16(t *testing.T) {
 		{name: "16-bit signed int (negative)", format: "int16", value: int16(-129), bytes: []byte{209, 255, 127}},
 		{name: "16-bit signed int (positive)", format: "int16", value: int16(128), bytes: []byte{209, 0, 128}},
 		{name: "16-bit signed int (positive)", format: "int16", value: int16(32767), bytes: []byte{209, 127, 255}},
-		{name: "optional nil", format: "int16?", value: container.None[int16](), bytes: []byte{192}},
+		{name: "optional nil", format: "int16?", value: container.None(), bytes: []byte{192}},
 		{name: "optional 16-bit signed int (negative)", format: "int16?", value: container.Some(int16(-32768)), bytes: []byte{209, 128, 0}},
 		{name: "optional 16-bit signed int (negative)", format: "int16?", value: container.Some(int16(-32767)), bytes: []byte{209, 128, 1}},
 		{name: "optional 16-bit signed int (negative)", format: "int16?", value: container.Some(int16(-129)), bytes: []byte{209, 255, 127}},
@@ -216,7 +214,7 @@ func TestWriteI32(t *testing.T) {
 		{name: "32-bit signed int (positive)", format: "int32", value: int32(32768), bytes: []byte{210, 0, 0, 128, 0}},
 		{name: "32-bit signed int (positive)", format: "int32", value: int32(123456), bytes: []byte{210, 0, 1, 226, 64}},
 		{name: "32-bit signed int (positive)", format: "int32", value: int32(2147483647), bytes: []byte{210, 127, 255, 255, 255}},
-		{name: "optional nil", format: "int32?", value: container.None[int32](), bytes: []byte{192}},
+		{name: "optional nil", format: "int32?", value: container.None(), bytes: []byte{192}},
 		{name: "optional 32-bit signed int (negative)", format: "int32?", value: container.Some(int32(-32769)), bytes: []byte{210, 255, 255, 127, 255}},
 		{name: "optional 32-bit signed int (negative)", format: "int32?", value: container.Some(int32(-2147483648)), bytes: []byte{210, 128, 0, 0, 0}},
 		{name: "optional 32-bit signed int (negative)", format: "int32?", value: container.Some(int32(-2147483647)), bytes: []byte{210, 128, 0, 0, 1}},
@@ -233,7 +231,7 @@ func TestWriteU8(t *testing.T) {
 		{name: "positive fixed int", format: "uint8", value: uint8(127), bytes: []byte{127}},
 		{name: "8-bit unsigned int", format: "uint8", value: uint8(200), bytes: []byte{204, 200}},
 		{name: "8-bit unsigned int", format: "uint8", value: uint8(255), bytes: []byte{204, 255}},
-		{name: "optional nil", format: "uint8?", value: container.None[uint8](), bytes: []byte{192}},
+		{name: "optional nil", format: "uint8?", value: container.None(), bytes: []byte{192}},
 		{name: "optional zero", format: "uint8?", value: container.Some(uint8(0)), bytes: []byte{0}},
 		{name: "optional positive fixed int", format: "uint8?", value: container.Some(uint8(1)), bytes: []byte{1}},
 		{name: "optional positive fixed int", format: "uint8?", value: container.Some(uint8(127)), bytes: []byte{127}},
@@ -248,7 +246,7 @@ func TestWriteU16(t *testing.T) {
 		{name: "16-bit unsigned int", format: "uint16", value: uint16(32767), bytes: []byte{205, 127, 255}},
 		{name: "16-bit unsigned int", format: "uint16", value: uint16(32768), bytes: []byte{205, 128, 0}},
 		{name: "16-bit unsigned int", format: "uint16", value: uint16(65535), bytes: []byte{205, 255, 255}},
-		{name: "optional nil", format: "uint16?", value: container.None[uint16](), bytes: []byte{192}},
+		{name: "optional nil", format: "uint16?", value: container.None(), bytes: []byte{192}},
 		{name: "optional 16-bit unsigned int", format: "uint16?", value: container.Some(uint16(256)), bytes: []byte{205, 1, 0}},
 		{name: "optional 16-bit unsigned int", format: "uint16?", value: container.Some(uint16(32767)), bytes: []byte{205, 127, 255}},
 		{name: "optional 16-bit unsigned int", format: "uint16?", value: container.Some(uint16(32768)), bytes: []byte{205, 128, 0}},
@@ -262,7 +260,7 @@ func TestWriteU32(t *testing.T) {
 		{name: "32-bit unsigned int", format: "uint32", value: uint32(123456), bytes: []byte{206, 0, 1, 226, 64}},
 		{name: "32-bit unsigned int", format: "uint32", value: uint32(2147483648), bytes: []byte{206, 128, 0, 0, 0}},
 		{name: "32-bit unsigned int", format: "uint32", value: uint32(4294967295), bytes: []byte{206, 255, 255, 255, 255}},
-		{name: "optional nil", format: "uint32?", value: container.None[uint32](), bytes: []byte{192}},
+		{name: "optional nil", format: "uint32?", value: container.None(), bytes: []byte{192}},
 		{name: "optional 32-bit unsigned int", format: "uint32?", value: container.Some(uint32(65536)), bytes: []byte{206, 0, 1, 0, 0}},
 		{name: "optional 32-bit unsigned int", format: "uint32?", value: container.Some(uint32(123456)), bytes: []byte{206, 0, 1, 226, 64}},
 		{name: "optional 32-bit unsigned int", format: "uint32?", value: container.Some(uint32(2147483648)), bytes: []byte{206, 128, 0, 0, 0}},
@@ -273,7 +271,7 @@ func TestWriteU32(t *testing.T) {
 func TestWriteFloat32(t *testing.T) {
 	runWriteCases(t, []writecase{
 		{name: "can write", format: "float32", value: float32(0.5), bytes: []byte{202, 63, 0, 0, 0}},
-		{name: "optional nil", format: "float32?", value: container.None[float32](), bytes: []byte{192}},
+		{name: "optional nil", format: "float32?", value: container.None(), bytes: []byte{192}},
 		{name: "optional value", format: "float32?", value: container.Some(float32(0.5)), bytes: []byte{202, 63, 0, 0, 0}},
 	})
 }
@@ -281,7 +279,7 @@ func TestWriteFloat32(t *testing.T) {
 func TestWriteFloat64(t *testing.T) {
 	runWriteCases(t, []writecase{
 		{name: "can write", format: "float64", value: float64(3.141592653589793), bytes: []byte{203, 64, 9, 33, 251, 84, 68, 45, 24}},
-		{name: "optional nil", format: "float64?", value: container.None[float64](), bytes: []byte{192}},
+		{name: "optional nil", format: "float64?", value: container.None(), bytes: []byte{192}},
 		{name: "optional value", format: "float64?", value: container.Some(float64(3.141592653589793)), bytes: []byte{203, 64, 9, 33, 251, 84, 68, 45, 24}},
 	})
 }
@@ -324,7 +322,7 @@ func TestWriteString(t *testing.T) {
 				97, 97, 97,
 			},
 		},
-		{name: "optional nil", format: "string?", value: container.None[string](), bytes: []byte{192}},
+		{name: "optional nil", format: "string?", value: container.None(), bytes: []byte{192}},
 		{name: "optional empty string", format: "string?", value: container.Some(""), bytes: []byte{160}},
 		{name: "optional 5-char String", format: "string?", value: container.Some("hello"), bytes: []byte{165, 104, 101, 108, 108, 111}},
 	})
@@ -333,7 +331,7 @@ func TestWriteString(t *testing.T) {
 func TestWriteBytes(t *testing.T) {
 	runWriteCases(t, []writecase{
 		{name: "can write", format: "bytes", value: []byte{1}, bytes: []byte{196, 1, 1}},
-		{name: "optional nil", format: "bytes?", value: container.None[[]byte](), bytes: []byte{192}},
+		{name: "optional nil", format: "bytes?", value: container.None(), bytes: []byte{192}},
 		{name: "optional value", format: "bytes?", value: container.Some([]byte{1}), bytes: []byte{196, 1, 1}},
 	})
 }
@@ -344,181 +342,181 @@ func TestWriteArray(t *testing.T) {
 		{
 			name:   "[]int8",
 			format: "array",
-			value:  []any{int8(math.MinInt8), int8(math.MaxInt8)},
+			value:  []interface{}{int8(math.MinInt8), int8(math.MaxInt8)},
 			bytes:  []byte{146, 208, 128, 127},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI8(item.(int8))
 			},
 		},
 		{
 			name:   "[]int16",
 			format: "array",
-			value:  []any{int16(math.MinInt16), int16(math.MaxInt16)},
+			value:  []interface{}{int16(math.MinInt16), int16(math.MaxInt16)},
 			bytes:  []byte{146, 209, 128, 0, 209, 127, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI16(item.(int16))
 			},
 		},
 		{
 			name:   "[]int32",
 			format: "array",
-			value:  []any{int32(math.MinInt32), int32(math.MaxInt32)},
+			value:  []interface{}{int32(math.MinInt32), int32(math.MaxInt32)},
 			bytes:  []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI32(item.(int32))
 			},
 		},
 		{
 			name:   "[]int64",
 			format: "array",
-			value:  []any{int64(math.MinInt64), int64(math.MaxInt64)},
+			value:  []interface{}{int64(math.MinInt64), int64(math.MaxInt64)},
 			bytes:  []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI64(item.(int64))
 			},
 		},
 		{
 			name:   "[]uint8",
 			format: "array",
-			value:  []any{uint8(0), uint8(math.MaxUint8)},
+			value:  []interface{}{uint8(0), uint8(math.MaxUint8)},
 			bytes:  []byte{146, 0, 204, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU8(item.(uint8))
 			},
 		},
 		{
 			name:   "[]uint16",
 			format: "array",
-			value:  []any{uint16(0), uint16(math.MaxUint16)},
+			value:  []interface{}{uint16(0), uint16(math.MaxUint16)},
 			bytes:  []byte{146, 0, 205, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU16(item.(uint16))
 			},
 		},
 		{
 			name:   "[]uint32",
 			format: "array",
-			value:  []any{uint32(0), uint32(math.MaxUint32)},
+			value:  []interface{}{uint32(0), uint32(math.MaxUint32)},
 			bytes:  []byte{146, 0, 206, 255, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU32(item.(uint32))
 			},
 		},
 		{
 			name:   "[]uint64",
 			format: "array",
-			value:  []any{uint64(0), uint64(math.MaxUint64)},
+			value:  []interface{}{uint64(0), uint64(math.MaxUint64)},
 			bytes:  []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU64(item.(uint64))
 			},
 		},
 		{
 			name:   "[]float32",
 			format: "array",
-			value:  []any{float32(0.6046603), float32(0.9405091)},
+			value:  []interface{}{float32(0.6046603), float32(0.9405091)},
 			bytes:  []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteFloat32(item.(float32))
 			},
 		},
 		{
 			name:   "[]float64",
 			format: "array",
-			value:  []any{float64(0.6645600532184904), float64(0.4377141871869802)},
+			value:  []interface{}{float64(0.6645600532184904), float64(0.4377141871869802)},
 			bytes:  []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteFloat64(item.(float64))
 			},
 		},
-		{name: "optional nil", format: "array?", value: container.None[[]any](), bytes: []byte{192}},
+		{name: "optional nil", format: "array?", value: container.None(), bytes: []byte{192}},
 		{
 			name:   "optional []int8",
 			format: "array?",
-			value:  container.Some([]any{int8(math.MinInt8), int8(math.MaxInt8)}),
+			value:  container.Some([]interface{}{int8(math.MinInt8), int8(math.MaxInt8)}),
 			bytes:  []byte{146, 208, 128, 127},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI8(item.(int8))
 			},
 		},
 		{
 			name:   "optional []int16",
 			format: "array?",
-			value:  container.Some([]any{int16(math.MinInt16), int16(math.MaxInt16)}),
+			value:  container.Some([]interface{}{int16(math.MinInt16), int16(math.MaxInt16)}),
 			bytes:  []byte{146, 209, 128, 0, 209, 127, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI16(item.(int16))
 			},
 		},
 		{
 			name:   "optional []int32",
 			format: "array?",
-			value:  container.Some([]any{int32(math.MinInt32), int32(math.MaxInt32)}),
+			value:  container.Some([]interface{}{int32(math.MinInt32), int32(math.MaxInt32)}),
 			bytes:  []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI32(item.(int32))
 			},
 		},
 		{
 			name:   "optional []int64",
 			format: "array?",
-			value:  container.Some([]any{int64(math.MinInt64), int64(math.MaxInt64)}),
+			value:  container.Some([]interface{}{int64(math.MinInt64), int64(math.MaxInt64)}),
 			bytes:  []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteI64(item.(int64))
 			},
 		},
 		{
 			name:   "optional []uint8",
 			format: "array?",
-			value:  container.Some([]any{uint8(0), uint8(math.MaxUint8)}),
+			value:  container.Some([]interface{}{uint8(0), uint8(math.MaxUint8)}),
 			bytes:  []byte{146, 0, 204, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU8(item.(uint8))
 			},
 		},
 		{
 			name:   "optional []uint16",
 			format: "array?",
-			value:  container.Some([]any{uint16(0), uint16(math.MaxUint16)}),
+			value:  container.Some([]interface{}{uint16(0), uint16(math.MaxUint16)}),
 			bytes:  []byte{146, 0, 205, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU16(item.(uint16))
 			},
 		},
 		{
 			name:   "optional []uint32",
 			format: "array?",
-			value:  container.Some([]any{uint32(0), uint32(math.MaxUint32)}),
+			value:  container.Some([]interface{}{uint32(0), uint32(math.MaxUint32)}),
 			bytes:  []byte{146, 0, 206, 255, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU32(item.(uint32))
 			},
 		},
 		{
 			name:   "optional []uint64",
 			format: "array?",
-			value:  container.Some([]any{uint64(0), uint64(math.MaxUint64)}),
+			value:  container.Some([]interface{}{uint64(0), uint64(math.MaxUint64)}),
 			bytes:  []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteU64(item.(uint64))
 			},
 		},
 		{
 			name:   "optional []float32",
 			format: "array?",
-			value:  container.Some([]any{float32(0.6046603), float32(0.9405091)}),
+			value:  container.Some([]interface{}{float32(0.6046603), float32(0.9405091)}),
 			bytes:  []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteFloat32(item.(float32))
 			},
 		},
 		{
 			name:   "optional []float64",
 			format: "array?",
-			value:  container.Some([]any{float64(0.6645600532184904), float64(0.4377141871869802)}),
+			value:  container.Some([]interface{}{float64(0.6645600532184904), float64(0.4377141871869802)}),
 			bytes:  []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
-			fn1: func(encoder Write, item any) {
+			fn1: func(encoder Write, item interface{}) {
 				encoder.WriteFloat64(item.(float64))
 			},
 		},
@@ -530,6 +528,9 @@ func TestWriteBigInt(t *testing.T) {
 		{name: "nil", format: "bigint", value: nil, bytes: []byte{192}},
 		{name: "zero", format: "bigint", value: big.NewInt(0), bytes: []byte{161, 48}},
 		{name: "maxInt64", format: "bigint", value: big.NewInt(math.MaxInt64), bytes: []byte{179, 57, 50, 50, 51, 51, 55, 50, 48, 51, 54, 56, 53, 52, 55, 55, 53, 56, 48, 55}},
+		{name: "optional nil", format: "bigint?", value: container.None(), bytes: []byte{192}},
+		{name: "optional zero", format: "bigint?", value: container.Some(big.NewInt(0)), bytes: []byte{161, 48}},
+		{name: "optional maxInt64", format: "bigint?", value: container.Some(big.NewInt(math.MaxInt64)), bytes: []byte{179, 57, 50, 50, 51, 51, 55, 50, 48, 51, 54, 56, 53, 52, 55, 55, 53, 56, 48, 55}},
 	})
 }
 
@@ -537,6 +538,8 @@ func TestWriteJSON(t *testing.T) {
 	runWriteCases(t, []writecase{
 		{name: "nil", format: "json", value: nil, bytes: []byte{192}},
 		{name: "obj", format: "json", value: fastjson.MustParse(`{"key1":1,"key2":"string","key3":true}`), bytes: []byte{217, 38, 123, 34, 107, 101, 121, 49, 34, 58, 49, 44, 34, 107, 101, 121, 50, 34, 58, 34, 115, 116, 114, 105, 110, 103, 34, 44, 34, 107, 101, 121, 51, 34, 58, 116, 114, 117, 101, 125}},
+		{name: "optional nil", format: "json?", value: container.None(), bytes: []byte{192}},
+		{name: "optional obj", format: "json?", value: container.Some(fastjson.MustParse(`{"key1":1,"key2":"string","key3":true}`)), bytes: []byte{217, 38, 123, 34, 107, 101, 121, 49, 34, 58, 49, 44, 34, 107, 101, 121, 50, 34, 58, 34, 115, 116, 114, 105, 110, 103, 34, 44, 34, 107, 101, 121, 51, 34, 58, 116, 114, 117, 101, 125}},
 	})
 }
 
@@ -545,14 +548,14 @@ func TestWriteMap(t *testing.T) {
 		{
 			name:   "map[int8]int64",
 			format: "map",
-			value: map[any]any{
+			value: map[interface{}]interface{}{
 				int8(1): int64(1),
 				int8(2): int64(2),
 				int8(3): int64(3),
 			},
 			prefix: []byte{131},
 			parts:  [][]byte{{1, 1}, {2, 2}, {3, 3}},
-			fn2: func(encoder Write, key any, value any) {
+			fn2: func(encoder Write, key interface{}, value interface{}) {
 				k := key.(int8)
 				encoder.WriteI8(k)
 				v := value.(int64)
@@ -562,7 +565,7 @@ func TestWriteMap(t *testing.T) {
 		{
 			name:   "map[string]string",
 			format: "map",
-			value: map[any]any{
+			value: map[interface{}]interface{}{
 				"key1": "value1",
 				"key2": "value2",
 				"key3": "value3",
@@ -573,7 +576,51 @@ func TestWriteMap(t *testing.T) {
 				{164, 107, 101, 121, 50, 166, 118, 97, 108, 117, 101, 50},
 				{164, 107, 101, 121, 51, 166, 118, 97, 108, 117, 101, 51},
 			},
-			fn2: func(encoder Write, key any, value any) {
+			fn2: func(encoder Write, key interface{}, value interface{}) {
+				k := key.(string)
+				encoder.WriteString(k)
+				v := value.(string)
+				encoder.WriteString(v)
+			},
+		},
+		{
+			name:   "optional nil",
+			format: "map?",
+			value:  container.None(),
+			prefix: []byte{192},
+		},
+		{
+			name:   "optional map[int8]int64",
+			format: "map?",
+			value: container.Some(map[interface{}]interface{}{
+				int8(1): int64(1),
+				int8(2): int64(2),
+				int8(3): int64(3),
+			}),
+			prefix: []byte{131},
+			parts:  [][]byte{{1, 1}, {2, 2}, {3, 3}},
+			fn2: func(encoder Write, key interface{}, value interface{}) {
+				k := key.(int8)
+				encoder.WriteI8(k)
+				v := value.(int64)
+				encoder.WriteI64(v)
+			},
+		},
+		{
+			name:   "optional map[string]string",
+			format: "map?",
+			value: container.Some(map[interface{}]interface{}{
+				"key1": "value1",
+				"key2": "value2",
+				"key3": "value3",
+			}),
+			prefix: []byte{131},
+			parts: [][]byte{
+				{164, 107, 101, 121, 49, 166, 118, 97, 108, 117, 101, 49},
+				{164, 107, 101, 121, 50, 166, 118, 97, 108, 117, 101, 50},
+				{164, 107, 101, 121, 51, 166, 118, 97, 108, 117, 101, 51},
+			},
+			fn2: func(encoder Write, key interface{}, value interface{}) {
 				k := key.(string)
 				encoder.WriteString(k)
 				v := value.(string)

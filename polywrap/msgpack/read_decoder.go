@@ -34,12 +34,26 @@ func (rd *ReadDecoder) ReadBool() bool {
 	return f == format.TRUE
 }
 
+func (rd *ReadDecoder) ReadOptionalBool() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadBool())
+}
+
 func (rd *ReadDecoder) ReadI8() int8 {
 	v := rd.ReadI64()
 	if math.MinInt8 > v || v > math.MaxInt8 {
 		panic(rd.context.PrintWithContext("int8 overflow"))
 	}
 	return int8(v)
+}
+
+func (rd *ReadDecoder) ReadOptionalI8() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadI8())
 }
 
 func (rd *ReadDecoder) ReadI16() int16 {
@@ -50,12 +64,26 @@ func (rd *ReadDecoder) ReadI16() int16 {
 	return int16(v)
 }
 
+func (rd *ReadDecoder) ReadOptionalI16() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadI16())
+}
+
 func (rd *ReadDecoder) ReadI32() int32 {
 	v := rd.ReadI64()
 	if math.MinInt32 > v || v > math.MaxInt32 {
 		panic(rd.context.PrintWithContext("int32 overflow"))
 	}
 	return int32(v)
+}
+
+func (rd *ReadDecoder) ReadOptionalI32() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadI32())
 }
 
 func (rd *ReadDecoder) ReadI64() int64 {
@@ -80,12 +108,26 @@ func (rd *ReadDecoder) ReadI64() int64 {
 	}
 }
 
+func (rd *ReadDecoder) ReadOptionalI64() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadI64())
+}
+
 func (rd *ReadDecoder) ReadU8() uint8 {
 	v := rd.ReadU64()
 	if 0 > v || v > math.MaxUint8 {
 		panic(rd.context.PrintWithContext("uint8 overflow"))
 	}
 	return uint8(v)
+}
+
+func (rd *ReadDecoder) ReadOptionalU8() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadU8())
 }
 
 func (rd *ReadDecoder) ReadU16() uint16 {
@@ -96,12 +138,26 @@ func (rd *ReadDecoder) ReadU16() uint16 {
 	return uint16(v)
 }
 
+func (rd *ReadDecoder) ReadOptionalU16() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadU16())
+}
+
 func (rd *ReadDecoder) ReadU32() uint32 {
 	v := rd.ReadU64()
 	if 0 > v || v > math.MaxUint32 {
 		panic(rd.context.PrintWithContext("uint32 overflow"))
 	}
 	return uint32(v)
+}
+
+func (rd *ReadDecoder) ReadOptionalU32() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadU32())
 }
 
 func (rd *ReadDecoder) ReadU64() uint64 {
@@ -126,6 +182,13 @@ func (rd *ReadDecoder) ReadU64() uint64 {
 	}
 }
 
+func (rd *ReadDecoder) ReadOptionalU64() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadU64())
+}
+
 func (rd *ReadDecoder) ReadF32() float32 {
 	if rd.view.ReadFormat() != format.FLOAT32 {
 		panic(rd.context.PrintWithContext("Property must be of type 'float32'. Found ..."))
@@ -133,11 +196,25 @@ func (rd *ReadDecoder) ReadF32() float32 {
 	return rd.view.ReadFloat32()
 }
 
+func (rd *ReadDecoder) ReadOptionalF32() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadF32())
+}
+
 func (rd *ReadDecoder) ReadF64() float64 {
 	if rd.view.ReadFormat() != format.FLOAT64 {
 		panic(rd.context.PrintWithContext("Property must be of type 'float64'. Found ..."))
 	}
 	return rd.view.ReadFloat64()
+}
+
+func (rd *ReadDecoder) ReadOptionalF64() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadF64())
 }
 
 func (rd *ReadDecoder) ReadBytesLength() uint32 {
@@ -155,36 +232,17 @@ func (rd *ReadDecoder) ReadBytesLength() uint32 {
 }
 
 func (rd *ReadDecoder) ReadBytes() []byte {
+	if rd.IsNil() {
+		return nil
+	}
 	return rd.view.ReadBytes(rd.ReadBytesLength())
 }
 
-func (rd *ReadDecoder) ReadMapLength() uint32 {
-	f := rd.view.ReadFormat()
-	if f == format.NIL {
-		return 0
+func (rd *ReadDecoder) ReadOptionalBytes() container.Option {
+	if rd.IsNil() {
+		return container.None()
 	}
-	if isFixedMap(uint8(f)) {
-		return uint32(f & format.FOUR_LEAST_SIG_BITS_IN_BYTE)
-	}
-	switch f {
-	case format.MAP16:
-		return uint32(rd.view.ReadUint16())
-	case format.MAP32:
-		return rd.view.ReadUint32()
-	case format.NIL:
-		return 0
-	}
-	panic(rd.context.PrintWithContext("Property must be of type 'map'. Found ..."))
-}
-
-func (rd *ReadDecoder) ReadMap(fn func(reader Read) (any, any)) map[any]any {
-	size := rd.ReadMapLength()
-	data := make(map[any]any)
-	for i := uint32(0); i < size; i++ {
-		k, v := fn(rd)
-		data[k] = v
-	}
-	return data
+	return container.Some(rd.ReadBytes())
 }
 
 func (rd *ReadDecoder) ReadStringLength() uint32 {
@@ -216,6 +274,47 @@ func (rd *ReadDecoder) ReadString() string {
 	return string(rd.view.ReadBytes(ln))
 }
 
+func (rd *ReadDecoder) ReadOptionalString() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadString())
+}
+
+func (rd *ReadDecoder) ReadJson() *fastjson.Value {
+	tmp := rd.ReadString()
+	if tmp == "" {
+		return nil
+	}
+	return fastjson.MustParse(tmp)
+}
+
+func (rd *ReadDecoder) ReadOptionalJson() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadJson())
+}
+
+func (rd *ReadDecoder) ReadBigInt() *big.Int {
+	tmp := rd.ReadString()
+	if tmp == "" {
+		return nil
+	}
+	val, ok := new(big.Int).SetString(tmp, 10)
+	if !ok {
+		panic(rd.context.PrintWithContext("Property must be of type 'BigInt'. Found ..."))
+	}
+	return val
+}
+
+func (rd *ReadDecoder) ReadOptionalBigInt() container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadBigInt())
+}
+
 func (rd *ReadDecoder) ReadArrayLength() uint32 {
 	f := rd.view.ReadFormat()
 	if f == format.NIL {
@@ -235,131 +334,56 @@ func (rd *ReadDecoder) ReadArrayLength() uint32 {
 	panic(rd.context.PrintWithContext("Property must be of type 'array'. Found ..."))
 }
 
-func (rd *ReadDecoder) ReadArray(fn func(reader Read) any) []any {
+func (rd *ReadDecoder) ReadArray(fn func(reader Read) interface{}) []interface{} {
 	size := rd.ReadArrayLength()
-	data := make([]any, size)
+	data := make([]interface{}, size)
 	for i := uint32(0); i < size; i++ {
 		data[i] = fn(rd)
 	}
 	return data
 }
 
-func (rd *ReadDecoder) ReadJson() *fastjson.Value {
-	tmp := rd.ReadString()
-	if tmp == "" {
-		return nil
-	}
-	return fastjson.MustParse(tmp)
-}
-
-func (rd *ReadDecoder) ReadBigInt() *big.Int {
-	tmp := rd.ReadString()
-	if tmp == "" {
-		return nil
-	}
-	val, ok := new(big.Int).SetString(tmp, 10)
-	if !ok {
-		panic(rd.context.PrintWithContext("Property must be of type 'BigInt'. Found ..."))
-	}
-	return val
-}
-
-func (rd *ReadDecoder) ReadOptionalBool() container.Option[bool] {
+func (rd *ReadDecoder) ReadOptionalArray(fn func(reader Read) interface{}) container.Option {
 	if rd.IsNil() {
-		return container.None[bool]()
-	}
-	return container.Some(rd.ReadBool())
-}
-
-func (rd *ReadDecoder) ReadOptionalI8() container.Option[int8] {
-	if rd.IsNil() {
-		return container.None[int8]()
-	}
-	return container.Some(rd.ReadI8())
-}
-
-func (rd *ReadDecoder) ReadOptionalI16() container.Option[int16] {
-	if rd.IsNil() {
-		return container.None[int16]()
-	}
-	return container.Some(rd.ReadI16())
-}
-
-func (rd *ReadDecoder) ReadOptionalI32() container.Option[int32] {
-	if rd.IsNil() {
-		return container.None[int32]()
-	}
-	return container.Some(rd.ReadI32())
-}
-
-func (rd *ReadDecoder) ReadOptionalI64() container.Option[int64] {
-	if rd.IsNil() {
-		return container.None[int64]()
-	}
-	return container.Some(rd.ReadI64())
-}
-
-func (rd *ReadDecoder) ReadOptionalU8() container.Option[uint8] {
-	if rd.IsNil() {
-		return container.None[uint8]()
-	}
-	return container.Some(rd.ReadU8())
-}
-
-func (rd *ReadDecoder) ReadOptionalU16() container.Option[uint16] {
-	if rd.IsNil() {
-		return container.None[uint16]()
-	}
-	return container.Some(rd.ReadU16())
-}
-
-func (rd *ReadDecoder) ReadOptionalU32() container.Option[uint32] {
-	if rd.IsNil() {
-		return container.None[uint32]()
-	}
-	return container.Some(rd.ReadU32())
-}
-
-func (rd *ReadDecoder) ReadOptionalU64() container.Option[uint64] {
-	if rd.IsNil() {
-		return container.None[uint64]()
-	}
-	return container.Some(rd.ReadU64())
-}
-
-func (rd *ReadDecoder) ReadOptionalF32() container.Option[float32] {
-	if rd.IsNil() {
-		return container.None[float32]()
-	}
-	return container.Some(rd.ReadF32())
-}
-
-func (rd *ReadDecoder) ReadOptionalF64() container.Option[float64] {
-	if rd.IsNil() {
-		return container.None[float64]()
-	}
-	return container.Some(rd.ReadF64())
-}
-
-func (rd *ReadDecoder) ReadOptionalBytes() container.Option[[]byte] {
-	if rd.IsNil() {
-		return container.None[[]byte]()
-	}
-	return container.Some(rd.ReadBytes())
-}
-
-func (rd *ReadDecoder) ReadOptionalString() container.Option[string] {
-	if rd.IsNil() {
-		return container.None[string]()
-	}
-	return container.Some(rd.ReadString())
-}
-
-func (rd *ReadDecoder) ReadOptionalArray(fn func(reader Read) any) container.Option[[]any] {
-	if rd.IsNil() {
-		return container.None[[]any]()
+		return container.None()
 	}
 	return container.Some(rd.ReadArray(fn))
+}
+
+func (rd *ReadDecoder) ReadMapLength() uint32 {
+	f := rd.view.ReadFormat()
+	if f == format.NIL {
+		return 0
+	}
+	if isFixedMap(uint8(f)) {
+		return uint32(f & format.FOUR_LEAST_SIG_BITS_IN_BYTE)
+	}
+	switch f {
+	case format.MAP16:
+		return uint32(rd.view.ReadUint16())
+	case format.MAP32:
+		return rd.view.ReadUint32()
+	case format.NIL:
+		return 0
+	}
+	panic(rd.context.PrintWithContext("Property must be of type 'map'. Found ..."))
+}
+
+func (rd *ReadDecoder) ReadMap(fn func(reader Read) (interface{}, interface{})) map[interface{}]interface{} {
+	size := rd.ReadMapLength()
+	data := make(map[interface{}]interface{})
+	for i := uint32(0); i < size; i++ {
+		k, v := fn(rd)
+		data[k] = v
+	}
+	return data
+}
+
+func (rd *ReadDecoder) ReadOptionalMap(fn func(reader Read) (interface{}, interface{})) container.Option {
+	if rd.IsNil() {
+		return container.None()
+	}
+	return container.Some(rd.ReadMap(fn))
 }
 
 func isFixedInt(v uint8) bool {

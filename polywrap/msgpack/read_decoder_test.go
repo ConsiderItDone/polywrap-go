@@ -14,9 +14,9 @@ type readcase struct {
 	name   string
 	bytes  []byte
 	format string
-	value  any
-	fn1    func(reader Read) any
-	fn2    func(reader Read) (any, any)
+	value  interface{}
+	fn1    func(reader Read) interface{}
+	fn2    func(reader Read) (interface{}, interface{})
 }
 
 func runReadCases(t *testing.T, cases []readcase) {
@@ -26,7 +26,7 @@ func runReadCases(t *testing.T, cases []readcase) {
 			context := NewContext("")
 			reader := NewReadDecoder(context, tcase.bytes)
 
-			var v any
+			var v interface{}
 			switch cases[i].format {
 			case "nil":
 				v = reader.IsNil()
@@ -83,15 +83,21 @@ func runReadCases(t *testing.T, cases []readcase) {
 			case "bytes?":
 				v = reader.ReadOptionalBytes()
 			case "array":
-				v = reader.ReadArray(cases[i].fn1)
+				v = reader.ReadArray(tcase.fn1)
 			case "array?":
-				v = reader.ReadOptionalArray(cases[i].fn1)
+				v = reader.ReadOptionalArray(tcase.fn1)
 			case "map":
-				v = reader.ReadMap(cases[i].fn2)
+				v = reader.ReadMap(tcase.fn2)
+			case "map?":
+				v = reader.ReadOptionalMap(tcase.fn2)
 			case "bigint":
 				v = reader.ReadBigInt()
+			case "bigint?":
+				v = reader.ReadOptionalBigInt()
 			case "json":
 				v = reader.ReadJson()
+			case "json?":
+				v = reader.ReadOptionalJson()
 			default:
 				t.Fatal("unknown format")
 			}
@@ -131,7 +137,7 @@ func TestReadBool(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "bool?",
-			value:  container.None[bool](),
+			value:  container.None(),
 		},
 		{
 			name:   "can optional false",
@@ -166,7 +172,7 @@ func TestReadI8(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "int8?",
-			value:  container.None[int8](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min i8",
@@ -201,7 +207,7 @@ func TestReadI16(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "int16?",
-			value:  container.None[int16](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min i16",
@@ -236,7 +242,7 @@ func TestReadI32(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "int32?",
-			value:  container.None[int32](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min i32",
@@ -271,7 +277,7 @@ func TestReadI64(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "int64?",
-			value:  container.None[int64](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min i64",
@@ -306,7 +312,7 @@ func TestReadU8(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "uint8?",
-			value:  container.None[uint8](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min u8",
@@ -341,7 +347,7 @@ func TestReadU16(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "uint16?",
-			value:  container.None[uint16](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min u16",
@@ -376,7 +382,7 @@ func TestReadU32(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "uint32?",
-			value:  container.None[uint32](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min u32",
@@ -411,7 +417,7 @@ func TestReadU64(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "uint64?",
-			value:  container.None[uint64](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional min u64",
@@ -458,7 +464,7 @@ func TestReadF32(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "float32?",
-			value:  container.None[float32](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional negative f32",
@@ -517,7 +523,7 @@ func TestReadF64(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "float64?",
-			value:  container.None[float64](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional negative f64",
@@ -564,7 +570,7 @@ func TestReadBytes(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "bytes?",
-			value:  container.None[[]byte](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional bytes",
@@ -593,7 +599,7 @@ func TestReadString(t *testing.T) {
 			name:   "can optional nil",
 			bytes:  []byte{192},
 			format: "string?",
-			value:  container.None[string](),
+			value:  container.None(),
 		},
 		{
 			name:   "can read optional empty string",
@@ -616,15 +622,15 @@ func TestReadArray(t *testing.T) {
 			name:   "nil",
 			bytes:  []byte{192},
 			format: "array",
-			value:  []any{},
+			value:  []interface{}{},
 			fn1:    nil,
 		},
 		{
 			name:   "[]int8",
 			bytes:  []byte{146, 208, 128, 127},
 			format: "array",
-			value:  []any{int8(math.MinInt8), int8(math.MaxInt8)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{int8(math.MinInt8), int8(math.MaxInt8)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI8()
 			},
 		},
@@ -632,8 +638,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]int16",
 			bytes:  []byte{146, 209, 128, 0, 209, 127, 255},
 			format: "array",
-			value:  []any{int16(math.MinInt16), int16(math.MaxInt16)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{int16(math.MinInt16), int16(math.MaxInt16)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI16()
 			},
 		},
@@ -641,8 +647,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]int32",
 			bytes:  []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
 			format: "array",
-			value:  []any{int32(math.MinInt32), int32(math.MaxInt32)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{int32(math.MinInt32), int32(math.MaxInt32)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI32()
 			},
 		},
@@ -650,8 +656,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]int64",
 			bytes:  []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
 			format: "array",
-			value:  []any{int64(math.MinInt64), int64(math.MaxInt64)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{int64(math.MinInt64), int64(math.MaxInt64)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI64()
 			},
 		},
@@ -659,8 +665,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]uint8",
 			bytes:  []byte{146, 0, 204, 255},
 			format: "array",
-			value:  []any{uint8(0), uint8(math.MaxUint8)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{uint8(0), uint8(math.MaxUint8)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU8()
 			},
 		},
@@ -668,8 +674,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]uint16",
 			bytes:  []byte{146, 0, 205, 255, 255},
 			format: "array",
-			value:  []any{uint16(0), uint16(math.MaxUint16)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{uint16(0), uint16(math.MaxUint16)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU16()
 			},
 		},
@@ -677,8 +683,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]uint32",
 			bytes:  []byte{146, 0, 206, 255, 255, 255, 255},
 			format: "array",
-			value:  []any{uint32(0), uint32(math.MaxUint32)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{uint32(0), uint32(math.MaxUint32)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU32()
 			},
 		},
@@ -686,8 +692,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]uint64",
 			bytes:  []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
 			format: "array",
-			value:  []any{uint64(0), uint64(math.MaxUint64)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{uint64(0), uint64(math.MaxUint64)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU64()
 			},
 		},
@@ -695,8 +701,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]float32",
 			bytes:  []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
 			format: "array",
-			value:  []any{float32(0.6046603), float32(0.9405091)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{float32(0.6046603), float32(0.9405091)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadF32()
 			},
 		},
@@ -704,8 +710,8 @@ func TestReadArray(t *testing.T) {
 			name:   "[]float64",
 			bytes:  []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
 			format: "array",
-			value:  []any{float64(0.6645600532184904), float64(0.4377141871869802)},
-			fn1: func(reader Read) any {
+			value:  []interface{}{float64(0.6645600532184904), float64(0.4377141871869802)},
+			fn1: func(reader Read) interface{} {
 				return reader.ReadF64()
 			},
 		},
@@ -713,14 +719,14 @@ func TestReadArray(t *testing.T) {
 			name:   "optional nil",
 			bytes:  []byte{192},
 			format: "array?",
-			value:  container.None[[]any](),
+			value:  container.None(),
 		},
 		{
 			name:   "optional []int8",
 			bytes:  []byte{146, 208, 128, 127},
 			format: "array?",
-			value:  container.Some([]any{int8(math.MinInt8), int8(math.MaxInt8)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{int8(math.MinInt8), int8(math.MaxInt8)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI8()
 			},
 		},
@@ -728,8 +734,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []int16",
 			bytes:  []byte{146, 209, 128, 0, 209, 127, 255},
 			format: "array?",
-			value:  container.Some([]any{int16(math.MinInt16), int16(math.MaxInt16)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{int16(math.MinInt16), int16(math.MaxInt16)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI16()
 			},
 		},
@@ -737,8 +743,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []int32",
 			bytes:  []byte{146, 210, 128, 0, 0, 0, 210, 127, 255, 255, 255},
 			format: "array?",
-			value:  container.Some([]any{int32(math.MinInt32), int32(math.MaxInt32)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{int32(math.MinInt32), int32(math.MaxInt32)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI32()
 			},
 		},
@@ -746,8 +752,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []int64",
 			bytes:  []byte{146, 211, 128, 0, 0, 0, 0, 0, 0, 0, 211, 127, 255, 255, 255, 255, 255, 255, 255},
 			format: "array?",
-			value:  container.Some([]any{int64(math.MinInt64), int64(math.MaxInt64)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{int64(math.MinInt64), int64(math.MaxInt64)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadI64()
 			},
 		},
@@ -755,8 +761,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []uint8",
 			bytes:  []byte{146, 0, 204, 255},
 			format: "array?",
-			value:  container.Some([]any{uint8(0), uint8(math.MaxUint8)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{uint8(0), uint8(math.MaxUint8)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU8()
 			},
 		},
@@ -764,8 +770,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []uint16",
 			bytes:  []byte{146, 0, 205, 255, 255},
 			format: "array?",
-			value:  container.Some([]any{uint16(0), uint16(math.MaxUint16)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{uint16(0), uint16(math.MaxUint16)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU16()
 			},
 		},
@@ -773,8 +779,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []uint32",
 			bytes:  []byte{146, 0, 206, 255, 255, 255, 255},
 			format: "array?",
-			value:  container.Some([]any{uint32(0), uint32(math.MaxUint32)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{uint32(0), uint32(math.MaxUint32)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU32()
 			},
 		},
@@ -782,8 +788,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []uint64",
 			bytes:  []byte{146, 0, 207, 255, 255, 255, 255, 255, 255, 255, 255},
 			format: "array?",
-			value:  container.Some([]any{uint64(0), uint64(math.MaxUint64)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{uint64(0), uint64(math.MaxUint64)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadU64()
 			},
 		},
@@ -791,8 +797,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []float32",
 			bytes:  []byte{146, 202, 63, 26, 203, 4, 202, 63, 112, 197, 52},
 			format: "array?",
-			value:  container.Some([]any{float32(0.6046603), float32(0.9405091)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{float32(0.6046603), float32(0.9405091)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadF32()
 			},
 		},
@@ -800,8 +806,8 @@ func TestReadArray(t *testing.T) {
 			name:   "optional []float64",
 			bytes:  []byte{146, 203, 63, 229, 68, 19, 113, 217, 165, 93, 203, 63, 220, 3, 130, 93, 189, 166, 190},
 			format: "array?",
-			value:  container.Some([]any{float64(0.6645600532184904), float64(0.4377141871869802)}),
-			fn1: func(reader Read) any {
+			value:  container.Some([]interface{}{float64(0.6645600532184904), float64(0.4377141871869802)}),
+			fn1: func(reader Read) interface{} {
 				return reader.ReadF64()
 			},
 		},
@@ -814,19 +820,19 @@ func TestReadMap(t *testing.T) {
 			name:   "nil",
 			bytes:  []byte{192},
 			format: "map",
-			value:  map[any]any{},
+			value:  map[interface{}]interface{}{},
 			fn2:    nil,
 		},
 		{
 			name:   "map[string]int64",
 			bytes:  []byte{131, 164, 107, 101, 121, 51, 3, 164, 107, 101, 121, 49, 1, 164, 107, 101, 121, 50, 2},
 			format: "map",
-			value: map[any]any{
+			value: map[interface{}]interface{}{
 				"key1": int64(1),
 				"key2": int64(2),
 				"key3": int64(3),
 			},
-			fn2: func(reader Read) (any, any) {
+			fn2: func(reader Read) (interface{}, interface{}) {
 				key := reader.ReadString()
 				val := reader.ReadI64()
 				return key, val
@@ -836,12 +842,49 @@ func TestReadMap(t *testing.T) {
 			name:   "map[string]string",
 			bytes:  []byte{131, 164, 107, 101, 121, 49, 164, 118, 97, 108, 49, 164, 107, 101, 121, 50, 164, 118, 97, 108, 50, 164, 107, 101, 121, 51, 164, 118, 97, 108, 51},
 			format: "map",
-			value: map[any]any{
+			value: map[interface{}]interface{}{
 				"key1": "val1",
 				"key2": "val2",
 				"key3": "val3",
 			},
-			fn2: func(reader Read) (any, any) {
+			fn2: func(reader Read) (interface{}, interface{}) {
+				key := reader.ReadString()
+				val := reader.ReadString()
+				return key, val
+			},
+		},
+		{
+			name:   "optional nil",
+			bytes:  []byte{192},
+			format: "map?",
+			value:  container.Some(map[interface{}]interface{}{}),
+			fn2:    nil,
+		},
+		{
+			name:   "optional map[string]int64",
+			bytes:  []byte{131, 164, 107, 101, 121, 51, 3, 164, 107, 101, 121, 49, 1, 164, 107, 101, 121, 50, 2},
+			format: "map?",
+			value: container.Some(map[interface{}]interface{}{
+				"key1": int64(1),
+				"key2": int64(2),
+				"key3": int64(3),
+			}),
+			fn2: func(reader Read) (interface{}, interface{}) {
+				key := reader.ReadString()
+				val := reader.ReadI64()
+				return key, val
+			},
+		},
+		{
+			name:   "optional map[string]string",
+			bytes:  []byte{131, 164, 107, 101, 121, 49, 164, 118, 97, 108, 49, 164, 107, 101, 121, 50, 164, 118, 97, 108, 50, 164, 107, 101, 121, 51, 164, 118, 97, 108, 51},
+			format: "map?",
+			value: container.Some(map[interface{}]interface{}{
+				"key1": "val1",
+				"key2": "val2",
+				"key3": "val3",
+			}),
+			fn2: func(reader Read) (interface{}, interface{}) {
 				key := reader.ReadString()
 				val := reader.ReadString()
 				return key, val
@@ -870,6 +913,24 @@ func TestReadBigInt(t *testing.T) {
 			format: "bigint",
 			value:  big.NewInt(math.MaxInt64),
 		},
+		{
+			name:   "optional nil",
+			bytes:  []byte{192},
+			format: "bigint",
+			value:  container.None(),
+		},
+		{
+			name:   "optional zero",
+			bytes:  []byte{161, 48},
+			format: "bigint",
+			value:  container.Some(big.NewInt(0)),
+		},
+		{
+			name:   "optional maxInt64",
+			bytes:  []byte{179, 57, 50, 50, 51, 51, 55, 50, 48, 51, 54, 56, 53, 52, 55, 55, 53, 56, 48, 55},
+			format: "bigint",
+			value:  container.Some(big.NewInt(math.MaxInt64)),
+		},
 	})
 }
 
@@ -886,6 +947,18 @@ func TestReadJson(t *testing.T) {
 			bytes:  []byte{217, 38, 123, 34, 107, 101, 121, 49, 34, 58, 49, 44, 34, 107, 101, 121, 50, 34, 58, 34, 115, 116, 114, 105, 110, 103, 34, 44, 34, 107, 101, 121, 51, 34, 58, 116, 114, 117, 101, 125},
 			format: "json",
 			value:  fastjson.MustParse(`{"key1":1,"key2":"string","key3":true}`),
+		},
+		{
+			name:   "optional nil",
+			bytes:  []byte{192},
+			format: "json",
+			value:  container.None(),
+		},
+		{
+			name:   "optional obj",
+			bytes:  []byte{217, 38, 123, 34, 107, 101, 121, 49, 34, 58, 49, 44, 34, 107, 101, 121, 50, 34, 58, 34, 115, 116, 114, 105, 110, 103, 34, 44, 34, 107, 101, 121, 51, 34, 58, 116, 114, 117, 101, 125},
+			format: "json",
+			value:  container.Some(fastjson.MustParse(`{"key1":1,"key2":"string","key3":true}`)),
 		},
 	})
 }
