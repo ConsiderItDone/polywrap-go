@@ -33,6 +33,12 @@ func (dw *DataView) WriteFormat(value format.Format) {
 	}
 }
 
+func (dw *DataView) PeekFormat() format.Format {
+	f := dw.ReadUint8()
+	dw.buf.UnreadByte()
+	return format.Format(f)
+}
+
 func (dw *DataView) ReadFormat() format.Format {
 	return format.Format(dw.ReadUint8())
 }
