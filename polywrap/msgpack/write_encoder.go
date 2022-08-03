@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/big"
+	"github.com/consideritdone/polywrap-go/polywrap/msgpack/container"
 	"github.com/consideritdone/polywrap-go/polywrap/msgpack/format"
 	"github.com/valyala/fastjson"
 )
@@ -37,16 +38,64 @@ func (we *WriteEncoder) WriteBool(value bool) {
 	}
 }
 
+func (we *WriteEncoder) WriteOptionalBool(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(bool)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'bool'"))
+	}
+	we.WriteBool(v)
+}
+
 func (we *WriteEncoder) WriteI8(value int8) {
 	we.WriteI64(int64(value))
+}
+
+func (we *WriteEncoder) WriteOptionalI8(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(int8)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'int8'"))
+	}
+	we.WriteI8(v)
 }
 
 func (we *WriteEncoder) WriteI16(value int16) {
 	we.WriteI64(int64(value))
 }
 
+func (we *WriteEncoder) WriteOptionalI16(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(int16)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'int16'"))
+	}
+	we.WriteI16(v)
+}
+
 func (we *WriteEncoder) WriteI32(value int32) {
 	we.WriteI64(int64(value))
+}
+
+func (we *WriteEncoder) WriteOptionalI32(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(int32)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'int32'"))
+	}
+	we.WriteI32(v)
 }
 
 func (we *WriteEncoder) WriteI64(value int64) {
@@ -71,16 +120,64 @@ func (we *WriteEncoder) WriteI64(value int64) {
 	}
 }
 
+func (we *WriteEncoder) WriteOptionalI64(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(int64)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'int64'"))
+	}
+	we.WriteI64(v)
+}
+
 func (we *WriteEncoder) WriteU8(value uint8) {
 	we.WriteU64(uint64(value))
+}
+
+func (we *WriteEncoder) WriteOptionalU8(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(uint8)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'uint8'"))
+	}
+	we.WriteU8(v)
 }
 
 func (we *WriteEncoder) WriteU16(value uint16) {
 	we.WriteU64(uint64(value))
 }
 
+func (we *WriteEncoder) WriteOptionalU16(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(uint16)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'uint16'"))
+	}
+	we.WriteU16(v)
+}
+
 func (we *WriteEncoder) WriteU32(value uint32) {
 	we.WriteU64(uint64(value))
+}
+
+func (we *WriteEncoder) WriteOptionalU32(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(uint32)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'uint32'"))
+	}
+	we.WriteU32(v)
 }
 
 func (we *WriteEncoder) WriteU64(value uint64) {
@@ -102,9 +199,33 @@ func (we *WriteEncoder) WriteU64(value uint64) {
 	}
 }
 
+func (we *WriteEncoder) WriteOptionalU64(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(uint64)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'uint64'"))
+	}
+	we.WriteU64(v)
+}
+
 func (we *WriteEncoder) WriteFloat32(value float32) {
 	we.view.WriteFormat(format.FLOAT32)
 	we.view.WriteFloat32(value)
+}
+
+func (we *WriteEncoder) WriteOptionalFloat32(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(float32)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'float32'"))
+	}
+	we.WriteFloat32(v)
 }
 
 func (we *WriteEncoder) WriteFloat64(value float64) {
@@ -112,24 +233,16 @@ func (we *WriteEncoder) WriteFloat64(value float64) {
 	we.view.WriteFloat64(value)
 }
 
-func (we *WriteEncoder) WriteStringLength(length uint32) {
-	if length < 32 {
-		we.view.WriteUint8(uint8(length) | uint8(format.FIXSTR))
-	} else if length <= math.MaxUint8 {
-		we.view.WriteUint8(uint8(format.STR8))
-		we.view.WriteUint8(uint8(length))
-	} else if length <= math.MaxUint16 {
-		we.view.WriteUint8(uint8(format.STR16))
-		we.view.WriteUint16(uint16(length))
-	} else {
-		we.view.WriteUint8(uint8(format.STR32))
-		we.view.WriteUint32(length)
+func (we *WriteEncoder) WriteOptionalFloat64(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
 	}
-}
-
-func (we *WriteEncoder) WriteString(value string) {
-	we.WriteStringLength(uint32(len(value)))
-	we.view.WriteString(value)
+	v, ok := value.MustGet().(float64)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'float64'"))
+	}
+	we.WriteFloat64(v)
 }
 
 func (we *WriteEncoder) WriteBytesLength(length uint32) {
@@ -154,23 +267,88 @@ func (we *WriteEncoder) WriteBytes(value []byte) {
 	we.view.WriteBytes(value)
 }
 
-func (we *WriteEncoder) WriteMapLength(length uint32) {
-	if length < 16 {
-		we.view.WriteUint8(uint8(length) | uint8(format.FIXMAP))
+func (we *WriteEncoder) WriteOptionalBytes(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().([]byte)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type '[]byte'"))
+	}
+	we.WriteBytes(v)
+}
+
+func (we *WriteEncoder) WriteStringLength(length uint32) {
+	if length < 32 {
+		we.view.WriteUint8(uint8(length) | uint8(format.FIXSTR))
+	} else if length <= math.MaxUint8 {
+		we.view.WriteUint8(uint8(format.STR8))
+		we.view.WriteUint8(uint8(length))
 	} else if length <= math.MaxUint16 {
-		we.view.WriteUint8(uint8(format.MAP16))
+		we.view.WriteUint8(uint8(format.STR16))
 		we.view.WriteUint16(uint16(length))
 	} else {
-		we.view.WriteUint8(uint8(format.MAP32))
+		we.view.WriteUint8(uint8(format.STR32))
 		we.view.WriteUint32(length)
 	}
 }
 
-func (we *WriteEncoder) WriteMap(value map[any]any, fn func(encoder Write, key any, value any)) {
-	we.WriteMapLength(uint32(len(value)))
-	for key := range value {
-		fn(we, key, value[key])
+func (we *WriteEncoder) WriteString(value string) {
+	we.WriteStringLength(uint32(len(value)))
+	we.view.WriteString(value)
+}
+
+func (we *WriteEncoder) WriteOptionalString(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
 	}
+	v, ok := value.MustGet().(string)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'string'"))
+	}
+	we.WriteString(v)
+}
+
+func (we *WriteEncoder) WriteJson(value *fastjson.Value) {
+	if value == nil {
+		we.WriteNil()
+		return
+	}
+	we.WriteString(value.String())
+}
+
+func (we *WriteEncoder) WriteOptionalJson(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(*fastjson.Value)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type '*fastjson.Value'"))
+	}
+	we.WriteJson(v)
+}
+
+func (we *WriteEncoder) WriteBigInt(value *big.Int) {
+	if value == nil {
+		we.WriteNil()
+		return
+	}
+	we.WriteString(value.String())
+}
+
+func (we *WriteEncoder) WriteOptionalBigInt(value container.Option) {
+	if value.IsNone() {
+		we.WriteNil()
+		return
+	}
+	v, ok := value.MustGet().(*big.Int)
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type '*big.Int'"))
+	}
+	we.WriteBigInt(v)
 }
 
 func (we *WriteEncoder) WriteArrayLength(length uint32) {
@@ -185,7 +363,7 @@ func (we *WriteEncoder) WriteArrayLength(length uint32) {
 	}
 }
 
-func (we *WriteEncoder) WriteArray(value []any, fn func(encoder Write, item any)) {
+func (we *WriteEncoder) WriteArray(value []interface{}, fn func(encoder Write, item interface{})) {
 	if len(value) == 0 {
 		we.WriteNil()
 		return
@@ -196,18 +374,45 @@ func (we *WriteEncoder) WriteArray(value []any, fn func(encoder Write, item any)
 	}
 }
 
-func (we *WriteEncoder) WriteJson(value *fastjson.Value) {
-	if value == nil {
+func (we *WriteEncoder) WriteOptionalArray(value container.Option, fn func(encoder Write, item interface{})) {
+	if value.IsNone() {
 		we.WriteNil()
 		return
 	}
-	we.WriteString(value.String())
+	v, ok := value.MustGet().([]interface{})
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type '[]interface{}'"))
+	}
+	we.WriteArray(v, fn)
 }
 
-func (we *WriteEncoder) WriteBigInt(value *big.Int) {
-	if value == nil {
+func (we *WriteEncoder) WriteMapLength(length uint32) {
+	if length < 16 {
+		we.view.WriteUint8(uint8(length) | uint8(format.FIXMAP))
+	} else if length <= math.MaxUint16 {
+		we.view.WriteUint8(uint8(format.MAP16))
+		we.view.WriteUint16(uint16(length))
+	} else {
+		we.view.WriteUint8(uint8(format.MAP32))
+		we.view.WriteUint32(length)
+	}
+}
+
+func (we *WriteEncoder) WriteMap(value map[interface{}]interface{}, fn func(encoder Write, key interface{}, value interface{})) {
+	we.WriteMapLength(uint32(len(value)))
+	for key := range value {
+		fn(we, key, value[key])
+	}
+}
+
+func (we *WriteEncoder) WriteOptionalMap(value container.Option, fn func(encoder Write, key interface{}, value interface{})) {
+	if value.IsNone() {
 		we.WriteNil()
 		return
 	}
-	we.WriteString(value.String())
+	v, ok := value.MustGet().(map[interface{}]interface{})
+	if !ok {
+		panic(we.context.PrintWithContext("Argument must be of type 'map[interface{}]interface{}'"))
+	}
+	we.WriteMap(v, fn)
 }

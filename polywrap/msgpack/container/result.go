@@ -1,72 +1,68 @@
 package container
 
 type (
-	Result[T any] struct {
-		value T
+	Result struct {
+		value interface{}
 		err   error
-		isErr bool
 	}
-	ResultResolver[T any] func(T) (T, error)
-	ResultRejecter[T any] func(error) (T, error)
+	ResultResolver func(interface{}) (interface{}, error)
+	ResultRejecter func(error) (interface{}, error)
 )
 
-func AsResult[T any](value T, err error) Result[T] {
+func AsResult(value interface{}, err error) Result {
 	if err != nil {
-		return Err[T](err)
+		return Err(err)
 	}
 	return Ok(value)
 }
 
-func Ok[T any](value T) Result[T] {
-	return Result[T]{
+func Ok(value interface{}) Result {
+	return Result{
 		value: value,
-		isErr: false,
+		err:   nil,
 	}
 }
 
-func Err[T any](err error) Result[T] {
-	return Result[T]{
+func Err(err error) Result {
+	return Result{
+		value: nil,
 		err:   err,
-		isErr: true,
 	}
 }
 
-func (r Result[T]) IsOk() bool {
-	return !r.isErr
+func (r Result) IsOk() bool {
+	return r.err == nil
 }
 
-func (r Result[T]) IsError() bool {
-	return r.isErr
+func (r Result) IsError() bool {
+	return r.err != nil
 }
 
-func (r Result[T]) Error() error {
+func (r Result) Error() error {
 	return r.err
 }
 
-func (r Result[T]) Get() (T, error) {
-	if r.isErr {
-		return empty[T](), r.err
-	}
-	return r.value, nil
+func (r Result) Get() (interface{}, error) {
+	return r.value, r.err
 }
 
-func (r Result[T]) MustGet() T {
-	if r.isErr {
+func (r Result) MustGet() interface{} {
+	if r.IsError() {
 		panic(r.err)
 	}
 	return r.value
 }
 
-func (r Result[T]) OrElse(fallback T) T {
-	if r.isErr {
+func (r Result) OrElse(fallback interface{}) interface{} {
+	if r.IsError() {
 		return fallback
 	}
 	return r.value
 }
 
-func (r Result[T]) Match(onSuccess ResultResolver[T], onError ResultRejecter[T]) Result[T] {
+func (r Result) Match(onSuccess ResultResolver, onError ResultRejecter) Result {
 	var (
-		v T
+		v interface{}
 		e error
 	)
 	if r.IsOk() {
@@ -77,5 +73,5 @@ func (r Result[T]) Match(onSuccess ResultResolver[T], onError ResultRejecter[T])
 	if e == nil {
 		return Ok(v)
 	}
-	return Err[T](e)
+	return Err(e)
 }
