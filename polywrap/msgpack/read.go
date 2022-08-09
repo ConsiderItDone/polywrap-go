@@ -6,62 +6,68 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-type Read interface {
-	Context() *Context
-	IsNil() bool
+type (
+	Read interface {
+		Context() *Context
+		View() *DataView
 
-	ReadBool() bool
-	ReadOptionalBool() container.Option
+		IsNextNil() bool
 
-	ReadI8() int8
-	ReadOptionalI8() container.Option
+		ReadBool() bool
+		ReadOptionalBool() container.Option[bool]
 
-	ReadI16() int16
-	ReadOptionalI16() container.Option
+		ReadInt8() int8
+		ReadOptionalInt8() container.Option[int8]
 
-	ReadI32() int32
-	ReadOptionalI32() container.Option
+		ReadInt16() int16
+		ReadOptionalInt16() container.Option[int16]
 
-	ReadI64() int64
-	ReadOptionalI64() container.Option
+		ReadInt32() int32
+		ReadOptionalInt32() container.Option[int32]
 
-	ReadU8() uint8
-	ReadOptionalU8() container.Option
+		ReadInt64() int64
+		ReadOptionalInt64() container.Option[int64]
 
-	ReadU16() uint16
-	ReadOptionalU16() container.Option
+		ReadUint8() uint8
+		ReadOptionalUint8() container.Option[uint8]
 
-	ReadU32() uint32
-	ReadOptionalU32() container.Option
+		ReadUint16() uint16
+		ReadOptionalUint16() container.Option[uint16]
 
-	ReadU64() uint64
-	ReadOptionalU64() container.Option
+		ReadUint32() uint32
+		ReadOptionalUint32() container.Option[uint32]
 
-	ReadF32() float32
-	ReadOptionalF32() container.Option
+		ReadUint64() uint64
+		ReadOptionalUint64() container.Option[uint64]
 
-	ReadF64() float64
-	ReadOptionalF64() container.Option
+		ReadFloat32() float32
+		ReadOptionalFloat32() container.Option[float32]
 
-	ReadBytesLength() uint32
-	ReadBytes() []byte
-	ReadOptionalBytes() container.Option
+		ReadFloat64() float64
+		ReadOptionalFloat64() container.Option[float64]
 
-	ReadStringLength() uint32
-	ReadString() string
-	ReadOptionalString() container.Option
+		ReadBytesLength() uint32
+		ReadBytes() []byte
+		ReadOptionalBytes() container.Option[[]byte]
 
-	ReadJson() *fastjson.Value
-	ReadOptionalJson() container.Option
+		ReadStringLength() uint32
+		ReadString() string
+		ReadOptionalString() container.Option[string]
+	}
 
-	ReadBigInt() *big.Int
-	ReadOptionalBigInt() container.Option
+	BigIntReader         func(Read) *big.Int
+	OptionalBigIntReader func(Read) container.Option[*big.Int]
 
-	ReadArrayLength() uint32
-	ReadArray(fn func(reader Read) interface{}) []interface{}
-	ReadOptionalArray(fn func(reader Read) interface{}) container.Option
+	JsonReader         func(Read) *fastjson.Value
+	OptionalJsonReader func(Read) container.Option[*fastjson.Value]
 
-	ReadMapLength() uint32
-	ReadMap(fn func(reader Read) (interface{}, interface{})) map[interface{}]interface{}
-	ReadOptionalMap(fn func(reader Read) (interface{}, interface{})) container.Option
-}
+	ArrayLengthReader          func(Read) uint32
+	ArrayItemReader[T any]     func(Read) T
+	ArrayReader[T any]         func(Read, ArrayItemReader[T]) []T
+	OptionalArrayReader[T any] func(Read, ArrayItemReader[T]) container.Option[[]T]
+
+	MapLengthReader                     func(Read) uint32
+	MapItemReader[K Ordered, V any]     func(Read) (K, V)
+	MapReader[K Ordered, V any]         func(Read, MapItemWriter[K, V]) map[K]V
+	OptionalMapReader[K Ordered, V any] func(Read, MapItemWriter[K, V]) container.Option[map[K]V]
+)

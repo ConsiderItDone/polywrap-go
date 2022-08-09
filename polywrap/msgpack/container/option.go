@@ -7,69 +7,50 @@ var (
 )
 
 type (
-	Option struct {
-		isValue bool
-		value   interface{}
+	Option[T any] struct {
+		value *T
 	}
-	OptionResolver func(interface{}) (interface{}, bool)
-	OptionRejecter func() (interface{}, bool)
+	OptionResolver[T any] func(T) (T, bool)
+	OptionRejecter[T any] func() (T, bool)
 )
 
-func Some(value interface{}) Option {
-	return Option{
-		isValue: true,
-		value:   value,
+func Some[T any](value T) Option[T] {
+	return Option[T]{
+		value: &value,
 	}
 }
 
-func None() Option {
-	return Option{
-		isValue: false,
-		value:   nil,
+func None[T any]() Option[T] {
+	return Option[T]{
+		value: nil,
 	}
 }
 
-func (o Option) IsSome() bool {
-	return o.isValue
+func AsOption[T any](value T, ok bool) Option[T] {
+	if !ok {
+		return None[T]()
+	}
+	return Some(value)
 }
 
-func (o Option) IsNone() bool {
-	return !o.isValue
+func (o Option[T]) IsSome() bool {
+	return o.value != nil
 }
 
-func (o Option) Get() (interface{}, bool) {
+func (o Option[T]) IsNone() bool {
+	return o.value == nil
+}
+
+func (o Option[T]) Unwrap() T {
 	if o.IsNone() {
-		return nil, false
+		panic("can't unwrap none value")
 	}
-	return o.value, true
+	return *o.value
 }
 
-func (o Option) MustGet() interface{} {
+func (o Option[T]) Match(onValue OptionResolver[T], onNone OptionRejecter[T]) Option[T] {
 	if o.IsNone() {
-		panic(ErrEmptyOption)
+		return AsOption(onNone())
 	}
-	return o.value
-}
-
-func (o Option) OrElse(fallback interface{}) interface{} {
-	if o.IsNone() {
-		return fallback
-	}
-	return o.value
-}
-
-func (o Option) Match(onValue OptionResolver, onNone OptionRejecter) Option {
-	var (
-		v  interface{}
-		ok bool
-	)
-	if o.IsSome() {
-		v, ok = onValue(o.value)
-	} else {
-		v, ok = onNone()
-	}
-	if ok {
-		return Some(v)
-	}
-	return None()
+	return AsOption(onValue(o.Unwrap()))
 }

@@ -208,7 +208,7 @@ func (dw *DataView) WriteString(value string) {
 }
 
 func (dw *DataView) ReadString() string {
-	return string(dw.buf.Bytes())
+	return dw.buf.String()
 }
 
 func (dw *DataView) WriteBytes(value []byte) {

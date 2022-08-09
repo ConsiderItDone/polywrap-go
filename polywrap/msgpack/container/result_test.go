@@ -5,61 +5,55 @@ import (
 	"testing"
 )
 
-var err = errors.New("some test err")
+var (
+	someResInt = 42
+	errSomeRes = errors.New("some test err")
+)
+
+func compareResults[T bool | int | string](t *testing.T, actual Result[T], expected Result[T]) {
+	if actual.IsErr() != expected.IsErr() {
+		t.Errorf("Bad isNone, got: %v, want: %v", actual, expected)
+	}
+	if actual.IsOk() != expected.IsOk() {
+		t.Errorf("Bad isSome, got: %v, want: %v", actual, expected)
+	}
+	if actual.IsOk() && expected.IsOk() && actual.Unwrap() != expected.Unwrap() {
+		t.Errorf("Bad value, got: %v, want: %v", actual.Unwrap(), expected.Unwrap())
+	}
+	if actual.IsErr() && expected.IsErr() && actual.Error() != expected.Error() {
+		t.Errorf("Bad value, got: %v, want: %v", actual.Unwrap(), expected.Unwrap())
+	}
+}
 
 func TestResultOk(t *testing.T) {
-	compare(t, Ok(42), Result{value: 42, err: nil})
+	compareResults(t, Ok(42), Result[int]{value: &someResInt, err: nil})
 }
 
 func TestResultErr(t *testing.T) {
-	compare(t, Err(err), Result{value: nil, err: err})
+	compareResults(t, Err[int](errSomeRes), Result[int]{value: nil, err: errSomeRes})
 }
 
 func TestResultAsResult(t *testing.T) {
-	compare(t, AsResult(42, nil), Ok(42))
-	compare(t, AsResult(nil, err), Err(err))
-}
-
-func TestResultIsOk(t *testing.T) {
-	compare(t, Ok(42).IsOk(), true)
-	compare(t, Err(err).IsOk(), false)
-}
-
-func TestResultIsErr(t *testing.T) {
-	compare(t, Ok(42).IsError(), false)
-	compare(t, Err(err).IsError(), true)
-}
-
-func TestResultGet(t *testing.T) {
-	v1, err1 := Ok(42).Get()
-	v2, err2 := Err(err).Get()
-	compare(t, v1, 42)
-	compare(t, err1, nil)
-	compare(t, v2, nil)
-	compare(t, err2, err)
-}
-
-func TestResultOrElse(t *testing.T) {
-	compare(t, Ok(42).OrElse(21), 42)
-	compare(t, Err(err).OrElse(21), 21)
+	compareResults(t, AsResult(someResInt, nil), Ok(someResInt))
+	compareResults(t, AsResult(someResInt, errSomeRes), Err[int](errSomeRes))
 }
 
 func TestResultMatch(t *testing.T) {
-	onValue1 := func(i interface{}) (interface{}, error) {
-		return i.(int) * 2, nil
-	}
-	onValue2 := func(i interface{}) (interface{}, error) {
-		return 0, err
-	}
-	onNone1 := func(e error) (interface{}, error) {
-		return 11, nil
-	}
-	onNone2 := func(e error) (interface{}, error) {
-		return 11, err
-	}
+	onValue1 := ResultResolver[int](func(i int) (int, error) {
+		return i * 2, nil
+	})
+	onValue2 := ResultResolver[int](func(i int) (int, error) {
+		return 0, errSomeRes
+	})
+	onNone1 := ResultRejecter[int](func(e error) (int, error) {
+		return someResInt, nil
+	})
+	onNone2 := ResultRejecter[int](func(e error) (int, error) {
+		return someResInt, errSomeRes
+	})
 
-	compare(t, Ok(21).Match(onValue1, onNone1), Ok(42))
-	compare(t, Ok(21).Match(onValue2, onNone1), Err(err))
-	compare(t, Err(err).Match(onValue1, onNone1), Ok(11))
-	compare(t, Err(err).Match(onValue1, onNone2), Err(err))
+	compareResults(t, Ok(someResInt/2).Match(onValue1, onNone1), Ok(someResInt))
+	compareResults(t, Ok(someResInt/2).Match(onValue2, onNone1), Err[int](errSomeRes))
+	compareResults(t, Err[int](errSomeRes).Match(onValue1, onNone1), Ok(42))
+	compareResults(t, Err[int](errSomeRes).Match(onValue1, onNone2), Err[int](errSomeRes))
 }

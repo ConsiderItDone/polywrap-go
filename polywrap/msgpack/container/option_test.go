@@ -1,64 +1,59 @@
 package container
 
 import (
-	"reflect"
 	"testing"
 )
 
-func compare(t *testing.T, actual interface{}, expected interface{}) {
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Bad value, got: %v, want: %v", actual, expected)
+var (
+	someOptInt = 42
+	someOptStr = "text"
+)
+
+func compareOptions[T bool | int | string](t *testing.T, actual Option[T], expected Option[T]) {
+	if actual.IsNone() != expected.IsNone() {
+		t.Errorf("Bad isNone, got: %v, want: %v", actual, expected)
+	}
+	if actual.IsSome() != expected.IsSome() {
+		t.Errorf("Bad isSome, got: %v, want: %v", actual, expected)
+	}
+	if actual.IsSome() && expected.IsSome() && actual.Unwrap() != expected.Unwrap() {
+		t.Errorf("Bad value, got: %v, want: %v", actual.Unwrap(), expected.Unwrap())
 	}
 }
 
 func TestOptionSome(t *testing.T) {
-	compare(t, Some(42), Option{isValue: true, value: 42})
+	compareOptions(t, Some(someOptInt), Option[int]{value: &someOptInt})
+	compareOptions(t, Some(someOptStr), Option[string]{value: &someOptStr})
 }
 
 func TestOptionNone(t *testing.T) {
-	compare(t, None(), Option{isValue: false, value: nil})
+	compareOptions(t, None[int](), Option[int]{value: nil})
+	compareOptions(t, None[string](), Option[string]{value: nil})
 }
 
-func TestOptionIsSome(t *testing.T) {
-	compare(t, Some(42).IsSome(), true)
-	compare(t, None().IsSome(), false)
-}
-
-func TestOptionIsNone(t *testing.T) {
-	compare(t, Some(42).IsNone(), false)
-	compare(t, None().IsNone(), true)
-}
-
-func TestOptionGet(t *testing.T) {
-	v1, ok1 := Some(42).Get()
-	v2, ok2 := None().Get()
-	compare(t, v1, 42)
-	compare(t, ok1, true)
-	compare(t, v2, nil)
-	compare(t, ok2, false)
-}
-
-func TestOptionOrElse(t *testing.T) {
-	compare(t, Some(42).OrElse(21), 42)
-	compare(t, None().OrElse(21), 21)
+func TestAsOption(t *testing.T) {
+	compareOptions(t, AsOption(42, true), Some(someOptInt))
+	compareOptions(t, AsOption("text", true), Some(someOptStr))
+	compareOptions(t, AsOption(someOptInt, false), None[int]())
+	compareOptions(t, AsOption(someOptStr, false), None[string]())
 }
 
 func TestOptionMatch(t *testing.T) {
-	onValue1 := func(i interface{}) (interface{}, bool) {
-		return i.(int) * 2, true
-	}
-	onValue2 := func(i interface{}) (interface{}, bool) {
-		return i.(int) * 2, false
-	}
-	onNone1 := func() (interface{}, bool) {
-		return 11, true
-	}
-	onNone2 := func() (interface{}, bool) {
-		return 11, false
-	}
+	onValue1 := OptionResolver[int](func(i int) (int, bool) {
+		return i * 2, true
+	})
+	onValue2 := OptionResolver[int](func(i int) (int, bool) {
+		return i * 2, false
+	})
+	onNone1 := OptionRejecter[int](func() (int, bool) {
+		return someOptInt, true
+	})
+	onNone2 := OptionRejecter[int](func() (int, bool) {
+		return someOptInt, false
+	})
 
-	compare(t, Some(21).Match(onValue1, onNone1), Some(42))
-	compare(t, Some(21).Match(onValue2, onNone2), None())
-	compare(t, None().Match(onValue1, onNone1), Some(11))
-	compare(t, None().Match(onValue1, onNone2), None())
+	compareOptions(t, Some(someOptInt/2).Match(onValue1, onNone1), Some(someOptInt))
+	compareOptions(t, Some(someOptInt/2).Match(onValue2, onNone2), None[int]())
+	compareOptions(t, None[int]().Match(onValue1, onNone1), Some(someOptInt))
+	compareOptions(t, None[int]().Match(onValue1, onNone2), None[int]())
 }

@@ -1,77 +1,57 @@
 package container
 
 type (
-	Result struct {
-		value interface{}
+	Result[T any] struct {
+		value *T
 		err   error
 	}
-	ResultResolver func(interface{}) (interface{}, error)
-	ResultRejecter func(error) (interface{}, error)
+	ResultResolver[T any] func(T) (T, error)
+	ResultRejecter[T any] func(error) (T, error)
 )
 
-func AsResult(value interface{}, err error) Result {
+func AsResult[T any](value T, err error) Result[T] {
 	if err != nil {
-		return Err(err)
+		return Err[T](err)
 	}
 	return Ok(value)
 }
 
-func Ok(value interface{}) Result {
-	return Result{
-		value: value,
+func Ok[T any](value T) Result[T] {
+	return Result[T]{
+		value: &value,
 		err:   nil,
 	}
 }
 
-func Err(err error) Result {
-	return Result{
+func Err[T any](err error) Result[T] {
+	return Result[T]{
 		value: nil,
 		err:   err,
 	}
 }
 
-func (r Result) IsOk() bool {
+func (r Result[T]) IsOk() bool {
 	return r.err == nil
 }
 
-func (r Result) IsError() bool {
+func (r Result[T]) IsErr() bool {
 	return r.err != nil
 }
 
-func (r Result) Error() error {
+func (r Result[T]) Error() error {
 	return r.err
 }
 
-func (r Result) Get() (interface{}, error) {
-	return r.value, r.err
+func (r Result[T]) Unwrap() T {
+	if r.IsErr() {
+		panic("can't unwrap err value")
+	}
+	return *r.value
 }
 
-func (r Result) MustGet() interface{} {
-	if r.IsError() {
-		panic(r.err)
+func (r Result[T]) Match(onValue ResultResolver[T], onError ResultRejecter[T]) Result[T] {
+	if r.IsErr() {
+		return AsResult(onError(r.err))
 	}
-	return r.value
-}
-
-func (r Result) OrElse(fallback interface{}) interface{} {
-	if r.IsError() {
-		return fallback
-	}
-	return r.value
-}
-
-func (r Result) Match(onSuccess ResultResolver, onError ResultRejecter) Result {
-	var (
-		v interface{}
-		e error
-	)
-	if r.IsOk() {
-		v, e = onSuccess(r.value)
-	} else {
-		v, e = onError(r.err)
-	}
-	if e == nil {
-		return Ok(v)
-	}
-	return Err(e)
+	return AsResult(onValue(r.Unwrap()))
 }
