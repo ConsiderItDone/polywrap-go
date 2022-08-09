@@ -588,11 +588,15 @@ func readCustomType(reader msgpack.Read) *CustomType {
 			reader.Context().Pop()
 		} else if field == "enumArray" {
 			reader.Context().Push(field, "Array<Types.CustomEnum>", "type found, reading property")
-			_enumArray = reader.ReadArray(func(reader msgpack.Read) interface{} {
+			tmp := reader.ReadArray(func(reader msgpack.Read) interface{} {
 				v := reader.ReadI32()
 				SanitizeCustomEnumValue(int(v))
 				return CustomEnum(v)
 			})
+			_enumArray = make([]CustomEnum, len(tmp))
+			for i := 0; i < len(tmp); i++ {
+				_enumArray[i] = tmp[i].(CustomEnum)
+			}
 			_enumArraySet = true
 			reader.Context().Pop()
 		} else if field == "optEnumArray" {
