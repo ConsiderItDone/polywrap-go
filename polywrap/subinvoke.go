@@ -1,6 +1,9 @@
 package polywrap
 
-import "unsafe"
+import (
+	"errors"
+	"unsafe"
+)
 
 //go:wasm-module wrap
 //export __wrap_subinvoke
@@ -26,7 +29,7 @@ func __wrap_subinvoke_error_len() uint32
 //export __wrap_subinvoke_error
 func __wrap_subinvoke_error(ptr uint32)
 
-func WrapSubinvoke(uri, method string, args []byte) {
+func WrapSubinvoke(uri, method string, args []byte) ([]byte, error) {
 	uriPtr := unsafe.Pointer(&uri)
 	methodPtr := unsafe.Pointer(&method)
 	argsPtr := unsafe.Pointer(&args)
@@ -40,8 +43,7 @@ func WrapSubinvoke(uri, method string, args []byte) {
 		errorPtr := unsafe.Pointer(&errorBuf)
 
 		__wrap_subinvoke_error(*(*uint32)(errorPtr))
-
-		// TODO return Result.Err
+		return nil, errors.New(string(errorBuf))
 	}
 
 	resultLen := __wrap_subinvoke_result_len()
@@ -49,6 +51,5 @@ func WrapSubinvoke(uri, method string, args []byte) {
 	resultPtr := unsafe.Pointer(&resultBuf)
 
 	__wrap_subinvoke_result(*(*uint32)(resultPtr))
-
-	// TODO return Result.Ok
+	return resultBuf, nil
 }
