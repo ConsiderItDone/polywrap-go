@@ -1,6 +1,9 @@
 package polywrap
 
-import "unsafe"
+import (
+	"errors"
+	"unsafe"
+)
 
 // Implementation Subinvoke Interface
 
@@ -28,7 +31,7 @@ func __wrap_subinvokeImplementation_error_len() uint32
 //export __wrap_subinvokeImplementation_error
 func __wrap_subinvokeImplementation_error(ptr uint32)
 
-func WrapSubinvokeImplementation(interfaceUri, implUri, method string, args []byte) {
+func WrapSubinvokeImplementation(interfaceUri, implUri, method string, args []byte) ([]byte, error) {
 	interfaceUriPtr := unsafe.Pointer(&interfaceUri)
 	implUriPtr := unsafe.Pointer(&implUri)
 	methodPtr := unsafe.Pointer(&method)
@@ -44,8 +47,7 @@ func WrapSubinvokeImplementation(interfaceUri, implUri, method string, args []by
 		errorPtr := unsafe.Pointer(&errorBuf)
 
 		__wrap_subinvokeImplementation_error(*(*uint32)(errorPtr))
-
-		// TODO return Result.Err
+		return nil, errors.New(string(errorBuf))
 	}
 
 	resultLen := __wrap_subinvokeImplementation_result_len()
@@ -53,6 +55,5 @@ func WrapSubinvokeImplementation(interfaceUri, implUri, method string, args []by
 	resultPtr := unsafe.Pointer(&resultBuf)
 
 	__wrap_subinvokeImplementation_result(*(*uint32)(resultPtr))
-
-	// TODO return Result.Ok
+	return resultBuf, nil
 }
