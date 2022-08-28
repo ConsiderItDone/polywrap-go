@@ -11,6 +11,7 @@ const (
 	FIXARRAY                    Format = 0x90
 	FIXSTR                      Format = 0xa0
 	NIL                         Format = 0xc0
+	RESERVED                    Format = 0xc1
 	FALSE                       Format = 0xc2
 	TRUE                        Format = 0xc3
 	BIN8                        Format = 0xc4
@@ -43,3 +44,64 @@ const (
 	MAP32                       Format = 0xdf
 	NEGATIVE_FIXINT             Format = 0xe0
 )
+
+func ToString(f Format) string {
+	switch f {
+	case NIL:
+		return "nil"
+	case RESERVED:
+		return "reserved"
+	case TRUE, FALSE:
+		return "bool"
+	case BIN8:
+		return "BIN8"
+	case BIN16:
+		return "BIN16"
+	case BIN32:
+		return "BIN32"
+	case EXT8:
+		return "EXT8"
+	case EXT16:
+		return "EXT16"
+	case EXT32:
+		return "EXT32"
+	case FLOAT32:
+		return "float32"
+	case FLOAT64:
+		return "float64"
+	case UINT8:
+		return "uint8"
+	case UINT16:
+		return "uint16"
+	case UINT32:
+		return "uint32"
+	case UINT64:
+		return "uint64"
+	case INT8:
+		return "int8"
+	case INT16:
+		return "int16"
+	case INT32:
+		return "int32"
+	case INT64:
+		return "int64"
+	case FIXEXT1:
+		return "FIXEXT1"
+	case FIXEXT2:
+		return "FIXEXT2"
+	case FIXEXT4:
+		return "FIXEXT4"
+	case FIXEXT8:
+		return "FIXEXT8"
+	case FIXEXT16:
+		return "FIXEXT16"
+	case STR8, STR16, STR32:
+		return "string"
+	case ARRAY16, ARRAY32:
+		return "array"
+	case MAP16, MAP32:
+		return "map"
+	default:
+		return "unknown"
+	}
+}

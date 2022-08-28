@@ -29,7 +29,7 @@ func (rd ReadDecoder) IsNil() bool {
 func (rd *ReadDecoder) ReadBool() bool {
 	f := rd.view.ReadFormat()
 	if f != format.TRUE && f != format.FALSE {
-		panic(rd.context.PrintWithContext("Property must be of type 'bool'. Found ..."))
+		panic(rd.context.PrintWithContext("Property must be of type 'bool'. Found " + format.ToString(f)))
 	}
 	return f == format.TRUE
 }
@@ -103,8 +103,14 @@ func (rd *ReadDecoder) ReadI64() int64 {
 		return int64(rd.view.ReadInt32())
 	case format.INT64:
 		return rd.view.ReadInt64()
+	case format.UINT8:
+		return int64(rd.view.ReadUint8())
+	case format.UINT16:
+		return int64(rd.view.ReadUint16())
+	case format.UINT32:
+		return int64(rd.view.ReadUint32())
 	default:
-		panic(rd.context.PrintWithContext("Property must be of type 'int'. Found ..."))
+		panic(rd.context.PrintWithContext("Property must be of type 'int'. Found " + format.ToString(f)))
 	}
 }
 
@@ -166,7 +172,7 @@ func (rd *ReadDecoder) ReadU64() uint64 {
 		return uint64(f)
 	}
 	if isNegativeFixedInt(uint8(f)) {
-		panic(rd.context.PrintWithContext("Unsigned integer cannot be negative. Found ..."))
+		panic(rd.context.PrintWithContext("Unsigned integer cannot be negative. Found " + format.ToString(f)))
 	}
 	switch f {
 	case format.UINT8:
@@ -178,7 +184,7 @@ func (rd *ReadDecoder) ReadU64() uint64 {
 	case format.UINT64:
 		return rd.view.ReadUint64()
 	default:
-		panic(rd.context.PrintWithContext("Property must be of type 'uint'. Found ..."))
+		panic(rd.context.PrintWithContext("Property must be of type 'uint'. Found " + format.ToString(f)))
 	}
 }
 
@@ -190,8 +196,9 @@ func (rd *ReadDecoder) ReadOptionalU64() container.Option {
 }
 
 func (rd *ReadDecoder) ReadF32() float32 {
-	if rd.view.ReadFormat() != format.FLOAT32 {
-		panic(rd.context.PrintWithContext("Property must be of type 'float32'. Found ..."))
+	f := rd.view.ReadFormat()
+	if f != format.FLOAT32 {
+		panic(rd.context.PrintWithContext("Property must be of type 'float32'. Found " + format.ToString(f)))
 	}
 	return rd.view.ReadFloat32()
 }
@@ -204,8 +211,9 @@ func (rd *ReadDecoder) ReadOptionalF32() container.Option {
 }
 
 func (rd *ReadDecoder) ReadF64() float64 {
-	if rd.view.ReadFormat() != format.FLOAT64 {
-		panic(rd.context.PrintWithContext("Property must be of type 'float64'. Found ..."))
+	f := rd.view.ReadFormat()
+	if f != format.FLOAT64 {
+		panic(rd.context.PrintWithContext("Property must be of type 'float64'. Found " + format.ToString(f)))
 	}
 	return rd.view.ReadFloat64()
 }
@@ -218,7 +226,8 @@ func (rd *ReadDecoder) ReadOptionalF64() container.Option {
 }
 
 func (rd *ReadDecoder) ReadBytesLength() uint32 {
-	switch rd.view.ReadFormat() {
+	f := rd.view.ReadFormat()
+	switch f {
 	case format.NIL:
 		return 0
 	case format.BIN8:
@@ -226,9 +235,9 @@ func (rd *ReadDecoder) ReadBytesLength() uint32 {
 	case format.BIN16:
 		return uint32(rd.view.ReadUint16())
 	case format.BIN32:
-		return uint32(rd.view.ReadUint32())
+		return rd.view.ReadUint32()
 	}
-	panic(rd.context.PrintWithContext("Property must be of type 'binary'. Found ..."))
+	panic(rd.context.PrintWithContext("Property must be of type 'binary'. Found " + format.ToString(f)))
 }
 
 func (rd *ReadDecoder) ReadBytes() []byte {
@@ -263,7 +272,7 @@ func (rd *ReadDecoder) ReadStringLength() uint32 {
 	case format.STR32:
 		return rd.view.ReadUint32()
 	}
-	panic(rd.context.PrintWithContext("Property must be of type 'string'. Found ..."))
+	panic(rd.context.PrintWithContext("Property must be of type 'string'. Found " + format.ToString(f)))
 }
 
 func (rd *ReadDecoder) ReadString() string {
@@ -303,7 +312,7 @@ func (rd *ReadDecoder) ReadBigInt() *big.Int {
 	}
 	val, ok := new(big.Int).SetString(tmp, 10)
 	if !ok {
-		panic(rd.context.PrintWithContext("Property must be of type 'BigInt'. Found ..."))
+		panic(rd.context.PrintWithContext("Property must be of type 'BigInt'"))
 	}
 	return val
 }
@@ -331,7 +340,7 @@ func (rd *ReadDecoder) ReadArrayLength() uint32 {
 	case format.NIL:
 		return 0
 	}
-	panic(rd.context.PrintWithContext("Property must be of type 'array'. Found ..."))
+	panic(rd.context.PrintWithContext("Property must be of type 'array'. Found " + format.ToString(f)))
 }
 
 func (rd *ReadDecoder) ReadArray(fn func(reader Read) interface{}) []interface{} {
@@ -366,7 +375,7 @@ func (rd *ReadDecoder) ReadMapLength() uint32 {
 	case format.NIL:
 		return 0
 	}
-	panic(rd.context.PrintWithContext("Property must be of type 'map'. Found ..."))
+	panic(rd.context.PrintWithContext("Property must be of type 'map'. Found " + format.ToString(f)))
 }
 
 func (rd *ReadDecoder) ReadMap(fn func(reader Read) (interface{}, interface{})) map[interface{}]interface{} {
