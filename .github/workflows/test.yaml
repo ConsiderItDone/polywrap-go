@@ -18,5 +18,11 @@ jobs:
       - name: Go version
         run: go version
 
-      - name: Tinygo version
+      - name: TinyGo version
         run: tinygo version
+
+      - name: Unit test using Go
+        run: go test -v ./...
+
+      - name: Unit test using TinyGo
+        run: go test -v ./...
